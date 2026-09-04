@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: disaster-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: disaster123
+      MYSQL_DATABASE: disaster_management
+      MYSQL_USER: disaster_user
+      MYSQL_PASSWORD: disaster123
+    ports:
+      - "3306:3306"
+    volumes:
+      - disaster_mysql_data:/var/lib/mysql
+
+volumes:
+  disaster_mysql_data:
