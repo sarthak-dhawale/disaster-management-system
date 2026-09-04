@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shelters - Disaster Management System</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/shelters.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                🚨
+            </div>
+
+            <div>
+                <h2>Disaster<span>MS</span></h2>
+                <p>Management System</p>
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-title">
+                MAIN
+            </div>
+
+            <a href="index.html" class="nav-item">
+                📊
+                <span>Dashboard</span>
+            </a>
+
+
+            <div class="nav-title">
+                MANAGEMENT
+            </div>
+
+            <a href="disasters.html" class="nav-item">
+                🌪️
+                <span>Disasters</span>
+            </a>
+
+            <a href="shelters.html" class="nav-item active">
+                🏠
+                <span>Shelters</span>
+            </a>
+
+            <a href="volunteers.html" class="nav-item">
+                👥
+                <span>Volunteers</span>
+            </a>
+
+            <a href="resources.html" class="nav-item">
+                📦
+                <span>Resources</span>
+            </a>
+
+            <a href="emergency-reports.html" class="nav-item">
+                🆘
+                <span>Emergency Reports</span>
+            </a>
+
+
+            <div class="nav-title">
+                SYSTEM
+            </div>
+
+            <a href="locations.html" class="nav-item">
+                📍
+                <span>Locations</span>
+            </a>
+
+            <a href="users.html" class="nav-item">
+                👤
+                <span>Users</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <span class="status-dot"></span>
+
+            System Online
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Shelters</h1>
+
+                <p>
+                    Manage emergency shelters and capacity
+                </p>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <div class="live-status">
+
+                    <span class="live-dot"></span>
+
+                    Live System
+
+                </div>
+
+
+                <div class="profile">
+
+                    <div class="profile-avatar">
+                        A
+                    </div>
+
+                    <div>
+
+                        <strong>Administrator</strong>
+
+                        <small>System Admin</small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE CONTENT -->
+
+        <section class="content">
+
+
+            <!-- STATISTICS -->
+
+            <div class="shelter-stats">
+
+
+                <div class="shelter-stat-card">
+
+                    <div class="shelter-stat-icon">
+                        🏠
+                    </div>
+
+                    <div>
+
+                        <span>Total Shelters</span>
+
+                        <strong id="total-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="shelter-stat-card">
+
+                    <div class="shelter-stat-icon available-icon">
+                        🟢
+                    </div>
+
+                    <div>
+
+                        <span>Available</span>
+
+                        <strong id="available-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="shelter-stat-card">
+
+                    <div class="shelter-stat-icon full-icon">
+                        🔴
+                    </div>
+
+                    <div>
+
+                        <span>Full</span>
+
+                        <strong id="full-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="shelter-stat-card">
+
+                    <div class="shelter-stat-icon capacity-icon">
+                        👥
+                    </div>
+
+                    <div>
+
+                        <span>Total Capacity</span>
+
+                        <strong id="total-capacity">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- MAIN PANEL -->
+
+            <div class="panel">
+
+
+                <div class="panel-header shelter-panel-header">
+
+                    <div>
+
+                        <h3>
+                            Shelter Records
+                        </h3>
+
+                        <p>
+                            View, search and manage emergency shelters
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="primary-btn"
+                        id="add-shelter-btn">
+
+                        + Add Shelter
+
+                    </button>
+
+                </div>
+
+
+                <!-- SEARCH / FILTER -->
+
+                <div class="filters">
+
+
+                    <div class="search-box">
+
+                        <span>
+                            🔎
+                        </span>
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Search shelters..."
+                        >
+
+                    </div>
+
+
+                    <select id="status-filter">
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="AVAILABLE">
+                            Available
+                        </option>
+
+                        <option value="FULL">
+                            Full
+                        </option>
+
+                        <option value="CLOSED">
+                            Closed
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        class="secondary-btn"
+                        id="refresh-btn">
+
+                        ↻ Refresh
+
+                    </button>
+
+
+                </div>
+
+
+                <!-- ERROR -->
+
+                <div id="page-error"></div>
+
+
+                <!-- TABLE -->
+
+                <div class="table-container">
+
+                    <table class="shelter-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>ID</th>
+
+                                <th>Shelter</th>
+
+                                <th>Location</th>
+
+                                <th>Capacity</th>
+
+                                <th>Occupancy</th>
+
+                                <th>Status</th>
+
+                                <th>Contact</th>
+
+                                <th>Actions</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="shelter-table-body">
+
+                            <tr>
+
+                                <td colspan="8">
+
+                                    <div class="loading">
+                                        Loading shelters...
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================================
+     ADD / EDIT MODAL
+================================= -->
+
+<div
+    class="modal-overlay"
+    id="shelter-modal">
+
+
+    <div class="modal">
+
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2 id="modal-title">
+                    Add Shelter
+                </h2>
+
+                <p>
+                    Enter shelter information
+                </p>
+
+            </div>
+
+
+            <button
+                class="modal-close"
+                id="close-modal">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <form id="shelter-form">
+
+
+            <input
+                type="hidden"
+                id="shelter-id"
+            >
+
+
+            <div class="form-grid">
+
+
+                <!-- NAME -->
+
+                <div class="form-group">
+
+                    <label for="shelter-name">
+                        Shelter Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="shelter-name"
+                        placeholder="Example: Central Relief Camp"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- LOCATION -->
+
+                <div class="form-group">
+
+                    <label for="location-id">
+                        Location ID
+                    </label>
+
+                    <input
+                        type="number"
+                        id="location-id"
+                        placeholder="Example: 1"
+                        min="1"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- CAPACITY -->
+
+                <div class="form-group">
+
+                    <label for="capacity">
+                        Capacity
+                    </label>
+
+                    <input
+                        type="number"
+                        id="capacity"
+                        placeholder="Example: 500"
+                        min="1"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- OCCUPANCY -->
+
+                <div class="form-group">
+
+                    <label for="current-occupancy">
+                        Current Occupancy
+                    </label>
+
+                    <input
+                        type="number"
+                        id="current-occupancy"
+                        placeholder="Example: 100"
+                        min="0"
+                        value="0"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PHONE -->
+
+                <div class="form-group">
+
+                    <label for="contact-phone">
+                        Contact Phone
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="contact-phone"
+                        placeholder="Example: 9876543210"
+                    >
+
+                </div>
+
+
+                <!-- STATUS -->
+
+                <div class="form-group">
+
+                    <label for="status">
+                        Status
+                    </label>
+
+                    <select
+                        id="status"
+                        required>
+
+                        <option value="AVAILABLE">
+                            Available
+                        </option>
+
+                        <option value="FULL">
+                            Full
+                        </option>
+
+                        <option value="CLOSED">
+                            Closed
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    id="cancel-btn">
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                    id="save-shelter-btn">
+
+                    Save Shelter
+
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/common.js"></script>
+<script src="js/shelters.js"></script>
+
+</body>
+
+</html>

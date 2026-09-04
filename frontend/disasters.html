@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Disasters - Disaster Management System</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/disasters.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                🚨
+            </div>
+
+            <div>
+                <h2>Disaster<span>MS</span></h2>
+                <p>Management System</p>
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-title">
+                MAIN
+            </div>
+
+            <a href="index.html" class="nav-item">
+                📊
+                <span>Dashboard</span>
+            </a>
+
+
+            <div class="nav-title">
+                MANAGEMENT
+            </div>
+
+            <a href="disasters.html" class="nav-item active">
+                🌪️
+                <span>Disasters</span>
+            </a>
+
+            <a href="shelters.html" class="nav-item">
+                🏠
+                <span>Shelters</span>
+            </a>
+
+            <a href="volunteers.html" class="nav-item">
+                👥
+                <span>Volunteers</span>
+            </a>
+
+            <a href="resources.html" class="nav-item">
+                📦
+                <span>Resources</span>
+            </a>
+
+            <a href="emergency-reports.html" class="nav-item">
+                🆘
+                <span>Emergency Reports</span>
+            </a>
+
+
+            <div class="nav-title">
+                SYSTEM
+            </div>
+
+            <a href="locations.html" class="nav-item">
+                📍
+                <span>Locations</span>
+            </a>
+
+            <a href="users.html" class="nav-item">
+                👤
+                <span>Users</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <span class="status-dot"></span>
+
+            System Online
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Disasters</h1>
+
+                <p>
+                    Monitor and manage disaster events
+                </p>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <div class="live-status">
+
+                    <span class="live-dot"></span>
+
+                    Live System
+
+                </div>
+
+
+                <div class="profile">
+
+                    <div class="profile-avatar">
+                        A
+                    </div>
+
+                    <div>
+
+                        <strong>Administrator</strong>
+
+                        <small>System Admin</small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE CONTENT -->
+
+        <section class="content">
+
+
+            <!-- STATISTICS -->
+
+            <div class="disaster-stats">
+
+                <div class="disaster-stat-card">
+
+                    <div class="disaster-stat-icon">
+                        🌪️
+                    </div>
+
+                    <div>
+
+                        <span>Total Disasters</span>
+
+                        <strong id="total-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="disaster-stat-card">
+
+                    <div class="disaster-stat-icon active-icon">
+                        ⚠️
+                    </div>
+
+                    <div>
+
+                        <span>Active</span>
+
+                        <strong id="active-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="disaster-stat-card">
+
+                    <div class="disaster-stat-icon critical-icon">
+                        🚨
+                    </div>
+
+                    <div>
+
+                        <span>Critical</span>
+
+                        <strong id="critical-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="disaster-stat-card">
+
+                    <div class="disaster-stat-icon resolved-icon">
+                        ✅
+                    </div>
+
+                    <div>
+
+                        <span>Resolved</span>
+
+                        <strong id="resolved-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- MAIN PANEL -->
+
+            <div class="panel">
+
+
+                <div class="panel-header disaster-panel-header">
+
+                    <div>
+
+                        <h3>
+                            Disaster Records
+                        </h3>
+
+                        <p>
+                            View, search and manage disaster information
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="primary-btn"
+                        id="add-disaster-btn">
+
+                        + Add Disaster
+
+                    </button>
+
+                </div>
+
+
+                <!-- SEARCH / FILTER -->
+
+                <div class="filters">
+
+                    <div class="search-box">
+
+                        <span>
+                            🔎
+                        </span>
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Search disasters..."
+                        >
+
+                    </div>
+
+
+                    <select id="status-filter">
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="active">
+                            Active
+                        </option>
+
+                        <option value="contained">
+                            Contained
+                        </option>
+
+                        <option value="resolved">
+                            Resolved
+                        </option>
+
+                    </select>
+
+
+                    <select id="severity-filter">
+
+                        <option value="">
+                            All Severity
+                        </option>
+
+                        <option value="critical">
+                            Critical
+                        </option>
+
+                        <option value="high">
+                            High
+                        </option>
+
+                        <option value="medium">
+                            Medium
+                        </option>
+
+                        <option value="low">
+                            Low
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        class="secondary-btn"
+                        id="refresh-btn">
+
+                        ↻ Refresh
+
+                    </button>
+
+                </div>
+
+
+                <!-- ERROR -->
+
+                <div id="page-error"></div>
+
+
+                <!-- TABLE -->
+
+                <div class="table-container">
+
+                    <table class="disaster-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>ID</th>
+
+                                <th>Disaster</th>
+
+                                <th>Type</th>
+
+                                <th>Severity</th>
+
+                                <th>Status</th>
+
+                                <th>Location</th>
+
+                                <th>Actions</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="disaster-table-body">
+
+                            <tr>
+
+                                <td colspan="7">
+
+                                    <div class="loading">
+                                        Loading disasters...
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================================
+     ADD / EDIT MODAL
+================================= -->
+
+<div
+    class="modal-overlay"
+    id="disaster-modal">
+
+
+    <div class="modal">
+
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2 id="modal-title">
+                    Add Disaster
+                </h2>
+
+                <p>
+                    Enter disaster information
+                </p>
+
+            </div>
+
+
+            <button
+                class="modal-close"
+                id="close-modal">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <form id="disaster-form">
+
+
+            <!-- Hidden ID -->
+
+            <input
+                type="hidden"
+                id="disaster-id"
+            >
+
+
+            <div class="form-grid">
+
+
+                <!-- DISASTER NAME -->
+
+                <div class="form-group">
+
+                    <label for="disaster-name">
+                        Disaster Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="disaster-name"
+                        placeholder="Example: Chennai Flood"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- DISASTER TYPE -->
+
+                <div class="form-group">
+
+                    <label for="disaster-type">
+                        Disaster Type
+                    </label>
+
+                    <select
+                        id="disaster-type"
+                        required>
+
+                        <option value="">
+                            Select Type
+                        </option>
+
+                        <option value="FLOOD">
+                            Flood
+                        </option>
+
+                        <option value="EARTHQUAKE">
+                            Earthquake
+                        </option>
+
+                        <option value="CYCLONE">
+                            Cyclone
+                        </option>
+
+                        <option value="LANDSLIDE">
+                            Landslide
+                        </option>
+
+                        <option value="WILDFIRE">
+                            Wildfire
+                        </option>
+
+                        <option value="DROUGHT">
+                            Drought
+                        </option>
+
+                        <option value="TSUNAMI">
+                            Tsunami
+                        </option>
+
+                        <option value="OTHER">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- SEVERITY -->
+
+                <div class="form-group">
+
+                    <label for="severity">
+                        Severity
+                    </label>
+
+                    <select
+                        id="severity"
+                        required>
+
+                        <option value="">
+                            Select Severity
+                        </option>
+
+                        <option value="LOW">
+                            Low
+                        </option>
+
+                        <option value="MEDIUM">
+                            Medium
+                        </option>
+
+                        <option value="HIGH">
+                            High
+                        </option>
+
+                        <option value="CRITICAL">
+                            Critical
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- STATUS -->
+
+                <div class="form-group">
+
+                    <label for="status">
+                        Status
+                    </label>
+
+                    <select
+                        id="status"
+                        required>
+
+                        <option value="ACTIVE">
+                            Active
+                        </option>
+
+                        <option value="CONTAINED">
+                            Contained
+                        </option>
+
+                        <option value="RESOLVED">
+                            Resolved
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- LOCATION -->
+
+                <div class="form-group">
+
+                    <label for="location-id">
+                        Location ID
+                    </label>
+
+                    <input
+                        type="number"
+                        id="location-id"
+                        placeholder="Example: 1"
+                        min="1"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- REPORTED BY -->
+
+                <div class="form-group">
+
+                    <label for="reported-by">
+                        Reported By (User ID)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="reported-by"
+                        placeholder="Example: 1"
+                        min="1"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- START TIME -->
+
+                <div class="form-group">
+
+                    <label for="start-time">
+                        Start Date & Time
+                    </label>
+
+                    <input
+                        type="datetime-local"
+                        id="start-time"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <div class="form-group full-width">
+
+                    <label for="description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        rows="4"
+                        placeholder="Enter disaster description..."
+                    ></textarea>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- FORM ACTIONS -->
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    id="cancel-btn">
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                    id="save-disaster-btn">
+
+                    Save Disaster
+
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/common.js"></script>
+<script src="js/disasters.js"></script>
+
+</body>
+
+</html>

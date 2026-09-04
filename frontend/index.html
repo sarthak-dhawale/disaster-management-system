@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Disaster Management System</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================================
+         SIDEBAR
+    ================================= -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                🚨
+            </div>
+
+            <div>
+                <h2>Disaster<span>MS</span></h2>
+                <p>Management System</p>
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-title">
+                MAIN
+            </div>
+
+            <a href="index.html" class="nav-item active">
+                📊
+                <span>Dashboard</span>
+            </a>
+
+
+            <div class="nav-title">
+                MANAGEMENT
+            </div>
+
+            <a href="disasters.html" class="nav-item">
+                🌪️
+                <span>Disasters</span>
+            </a>
+
+            <a href="shelters.html" class="nav-item">
+                🏠
+                <span>Shelters</span>
+            </a>
+
+            <a href="volunteers.html" class="nav-item">
+                👥
+                <span>Volunteers</span>
+            </a>
+
+            <a href="resources.html" class="nav-item">
+                📦
+                <span>Resources</span>
+            </a>
+
+            <a href="emergency-reports.html" class="nav-item">
+                🆘
+                <span>Emergency Reports</span>
+            </a>
+
+
+            <div class="nav-title">
+                SYSTEM
+            </div>
+
+            <a href="locations.html" class="nav-item">
+                📍
+                <span>Locations</span>
+            </a>
+
+            <a href="users.html" class="nav-item">
+                👤
+                <span>Users</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <span class="status-dot"></span>
+
+            System Online
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================================
+         MAIN CONTENT
+    ================================= -->
+
+    <main class="main-content">
+
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Dashboard</h1>
+
+                <p>
+                    Disaster Management Overview
+                </p>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <div class="live-status">
+
+                    <span class="live-dot"></span>
+
+                    Live System
+
+                </div>
+
+
+                <div class="profile">
+
+                    <div class="profile-avatar">
+                        A
+                    </div>
+
+                    <div>
+
+                        <strong>Administrator</strong>
+
+                        <small>System Admin</small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <section class="content">
+
+
+            <!-- ERROR MESSAGE -->
+
+            <div id="dashboard-error"></div>
+
+
+            <!-- ================================
+                 STAT CARDS
+            ================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <span class="stat-label">
+                            Total Disasters
+                        </span>
+
+                        <div class="stat-icon">
+                            🌪️
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="total-disasters">
+                        0
+                    </div>
+
+                    <div class="stat-subtitle">
+                        All recorded disasters
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <span class="stat-label">
+                            Active Disasters
+                        </span>
+
+                        <div class="stat-icon">
+                            ⚠️
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="active-disasters">
+                        0
+                    </div>
+
+                    <div class="stat-subtitle">
+                        Currently active
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <span class="stat-label">
+                            Available Shelters
+                        </span>
+
+                        <div class="stat-icon">
+                            🏠
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="available-shelters">
+                        0
+                    </div>
+
+                    <div class="stat-subtitle">
+                        Shelters with space
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <span class="stat-label">
+                            Available Volunteers
+                        </span>
+
+                        <div class="stat-icon">
+                            👥
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="available-volunteers">
+                        0
+                    </div>
+
+                    <div class="stat-subtitle">
+                        Ready for assignment
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <span class="stat-label">
+                            Available Resources
+                        </span>
+
+                        <div class="stat-icon">
+                            📦
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="available-resources">
+                        0
+                    </div>
+
+                    <div class="stat-subtitle">
+                        Total available quantity
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ================================
+                 SECOND ROW
+            ================================= -->
+
+            <div class="dashboard-columns">
+
+
+                <!-- SHELTER OCCUPANCY -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>
+                                Shelter Occupancy
+                            </h3>
+
+                            <p>
+                                Current shelter utilization
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="occupancy-box">
+
+                        <div class="occupancy-numbers">
+
+                            <div>
+
+                                <span
+                                    class="occupancy-current"
+                                    id="occupancy-current">
+                                    0
+                                </span>
+
+                                <span
+                                    class="occupancy-total"
+                                    id="occupancy-total">
+                                    / 0
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="progress-bar">
+
+                            <div
+                                class="progress-fill"
+                                id="occupancy-progress">
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="occupancy-percent"
+                            id="occupancy-percent">
+                            0% occupied
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- QUICK SUMMARY -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>
+                                Quick Summary
+                            </h3>
+
+                            <p>
+                                Current system status
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="summary-list">
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Critical Disasters
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="critical-disasters">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Resolved Disasters
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="resolved-disasters">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Pending Reports
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="pending-reports">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Active Reports
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="active-reports">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Active Registrations
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="registered-people">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Active Assignments
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="assigned-volunteers">
+                                0
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================
+                 ACTIVE DISASTERS
+            ================================= -->
+
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>
+                            Active Disasters
+                        </h3>
+
+                        <p>
+                            Recently recorded active disasters
+                        </p>
+
+                    </div>
+
+                    <a
+                        href="disasters.html"
+                        class="secondary-btn">
+                        View All
+                    </a>
+
+                </div>
+
+
+                <div class="table-container">
+
+                    <table class="dashboard-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Name</th>
+
+                                <th>Type</th>
+
+                                <th>Severity</th>
+
+                                <th>Status</th>
+
+                                <th>Location ID</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="disaster-table-body">
+
+                            <tr>
+
+                                <td colspan="5">
+
+                                    <div class="loading">
+                                        Loading disasters...
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <br>
+
+
+            <!-- ================================
+                 RESOURCES
+            ================================= -->
+
+            <div class="lower-grid">
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>
+                                Resource Overview
+                            </h3>
+
+                            <p>
+                                Available resources
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="resources.html"
+                            class="secondary-btn">
+                            View All
+                        </a>
+
+                    </div>
+
+
+                    <div
+                        class="resource-list"
+                        id="resource-list">
+
+                        <div class="loading">
+                            Loading resources...
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>
+                                Emergency Reports
+                            </h3>
+
+                            <p>
+                                Current emergency report status
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="emergency-reports.html"
+                            class="secondary-btn">
+                            View All
+                        </a>
+
+                    </div>
+
+
+                    <div class="summary-list">
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Total Reports
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="emergency-reports">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Pending
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="pending-reports-2">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                In Progress
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="active-reports-2">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Resolved
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="resolved-reports">
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span class="summary-label">
+                                Critical
+                            </span>
+
+                            <span
+                                class="summary-value"
+                                id="critical-reports">
+                                0
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- JAVASCRIPT -->
+
+<script src="js/common.js"></script>
+<script src="js/dashboard.js"></script>
+
+</body>
+
+</html>

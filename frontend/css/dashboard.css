@@ -1,0 +1,263 @@
+/* ================================
+   DASHBOARD
+================================ */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.stat-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    background: #fee2e2;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 5px;
+}
+
+.stat-subtitle {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* ================================
+   DASHBOARD CONTENT
+================================ */
+
+.dashboard-columns {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+/* ================================
+   OCCUPANCY
+================================ */
+
+.occupancy-box {
+    padding: 10px 0 5px;
+}
+
+.occupancy-numbers {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    margin-bottom: 12px;
+}
+
+.occupancy-current {
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.occupancy-total {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #e5e7eb;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+}
+
+.occupancy-percent {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* ================================
+   QUICK SUMMARY
+================================ */
+
+.summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.summary-label {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.summary-value {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* ================================
+   TABLE
+================================ */
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 13px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.dashboard-table th {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.dashboard-table td {
+    font-size: 13px;
+}
+
+.dashboard-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ================================
+   LOWER CARDS
+================================ */
+
+.lower-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.resource-list {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.resource-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--background);
+    border-radius: 9px;
+}
+
+.resource-name {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.resource-quantity {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* ================================
+   EMPTY / ERROR
+================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 30px 15px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.error-state {
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 14px;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .lower-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 650px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 450px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
