@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteers - Disaster Management System</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/volunteers.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">🚨</div>
+            <div>
+                <h2>DisasterMS</h2>
+                <span>Management System</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-section-title">MAIN</div>
+
+            <a href="index.html" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-section-title">MANAGEMENT</div>
+
+            <a href="disasters.html" class="nav-link">
+                <span class="nav-icon">⚠️</span>
+                <span>Disasters</span>
+            </a>
+
+            <a href="shelters.html" class="nav-link">
+                <span class="nav-icon">🏠</span>
+                <span>Shelters</span>
+            </a>
+
+            <a href="volunteers.html" class="nav-link active">
+                <span class="nav-icon">👥</span>
+                <span>Volunteers</span>
+            </a>
+
+            <a href="resources.html" class="nav-link">
+                <span class="nav-icon">📦</span>
+                <span>Resources</span>
+            </a>
+
+            <a href="emergency-reports.html" class="nav-link">
+                <span class="nav-icon">🆘</span>
+                <span>Emergency<br>Reports</span>
+            </a>
+
+            <div class="nav-section-title">SYSTEM</div>
+
+            <a href="locations.html" class="nav-link">
+                <span class="nav-icon">📍</span>
+                <span>Locations</span>
+            </a>
+
+            <a href="users.html" class="nav-link">
+                <span class="nav-icon">👤</span>
+                <span>Users</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="online-dot"></span>
+            <span>System Online</span>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+
+            <div class="page-heading">
+                <h1>Volunteers</h1>
+                <p>Manage emergency volunteers and availability</p>
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="live-status">
+                    <span class="live-dot"></span>
+                    <span>Live System</span>
+                </div>
+
+                <div class="admin-profile">
+                    <div class="admin-avatar">A</div>
+
+                    <div>
+                        <strong>Administrator</strong>
+                        <small>System Admin</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE BODY -->
+        <section class="content">
+
+            <!-- STAT CARDS -->
+            <div class="volunteer-stats">
+
+                <div class="volunteer-stat-card">
+
+                    <div class="stat-icon stat-icon-total">
+                        👥
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Total Volunteers</span>
+                        <strong id="total-count">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="volunteer-stat-card">
+
+                    <div class="stat-icon stat-icon-available">
+                        🟢
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Available</span>
+                        <strong id="available-count">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="volunteer-stat-card">
+
+                    <div class="stat-icon stat-icon-assigned">
+                        📋
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Assigned</span>
+                        <strong id="assigned-count">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="volunteer-stat-card">
+
+                    <div class="stat-icon stat-icon-unavailable">
+                        🔴
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Unavailable</span>
+                        <strong id="unavailable-count">0</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- VOLUNTEER RECORDS -->
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Volunteer Records</h2>
+                        <p>View, search and manage emergency volunteers</p>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        + Add Volunteer
+                    </button>
+
+                </div>
+
+
+                <!-- FILTERS -->
+                <div class="filters">
+
+                    <div class="search-box">
+
+                        <span class="search-icon">🔎</span>
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Search volunteers..."
+                            oninput="applyFilters()"
+                        >
+
+                    </div>
+
+
+                    <select id="status-filter" onchange="applyFilters()">
+
+                        <option value="ALL">All Status</option>
+                        <option value="AVAILABLE">Available</option>
+                        <option value="ASSIGNED">Assigned</option>
+                        <option value="UNAVAILABLE">Unavailable</option>
+
+                    </select>
+
+
+                    <button class="btn btn-secondary" onclick="loadVolunteers()">
+                        ↻ Refresh
+                    </button>
+
+                </div>
+
+
+                <!-- ERROR -->
+                <div id="page-error" class="page-error"></div>
+
+
+                <!-- TABLE -->
+                <div class="table-wrapper">
+
+                    <table class="data-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>ID</th>
+                                <th>VOLUNTEER</th>
+                                <th>CONTACT</th>
+                                <th>SKILLS</th>
+                                <th>AVAILABILITY</th>
+                                <th>EMERGENCY CONTACT</th>
+                                <th>JOINED</th>
+                                <th>ACTIONS</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="volunteers-table-body">
+
+                            <tr>
+                                <td colspan="8" class="loading">
+                                    Loading volunteers...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ADD / EDIT MODAL -->
+<div id="volunteer-modal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modal-title">Add Volunteer</h2>
+                <p id="modal-subtitle">Register a new emergency volunteer</p>
+            </div>
+
+            <button class="modal-close" onclick="closeModal()">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="volunteer-form" onsubmit="saveVolunteer(event)">
+
+            <input
+                type="hidden"
+                id="volunteer-id"
+            >
+
+
+            <div class="form-group">
+
+                <label for="user-id">
+                    User ID <span>*</span>
+                </label>
+
+                <input
+                    type="number"
+                    id="user-id"
+                    min="1"
+                    required
+                    placeholder="Enter existing User ID"
+                >
+
+                <small class="form-help">
+                    The User ID must already exist in the Users table.
+                </small>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="skills">
+                    Skills
+                </label>
+
+                <textarea
+                    id="skills"
+                    rows="3"
+                    placeholder="Example: First Aid, Rescue, Medical Support"
+                ></textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="availability-status">
+                    Availability Status <span>*</span>
+                </label>
+
+                <select id="availability-status" required>
+
+                    <option value="AVAILABLE">AVAILABLE</option>
+                    <option value="ASSIGNED">ASSIGNED</option>
+                    <option value="UNAVAILABLE">UNAVAILABLE</option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="emergency-contact">
+                    Emergency Contact
+                </label>
+
+                <input
+                    type="text"
+                    id="emergency-contact"
+                    placeholder="Enter emergency contact"
+                >
+
+            </div>
+
+
+            <div id="modal-error" class="modal-error"></div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="save-button"
+                >
+                    Save Volunteer
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/common.js"></script>
+<script src="js/volunteers.js"></script>
+
+</body>
+</html>
