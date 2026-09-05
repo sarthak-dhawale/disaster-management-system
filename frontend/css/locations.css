@@ -1,5 +1,5 @@
 /* =========================================
-   EMERGENCY REPORTS PAGE
+   LOCATIONS PAGE
    ========================================= */
 
 .content {
@@ -13,7 +13,7 @@
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-bottom: 25px;
 }
@@ -51,10 +51,6 @@
     font-size: 25px;
     font-weight: 700;
     color: #111827;
-}
-
-.critical-card {
-    border-color: #fecaca;
 }
 
 
@@ -107,26 +103,19 @@
     flex: 1;
 }
 
-.search-box input,
-.filters select {
+.search-box input {
     width: 100%;
     height: 40px;
+    box-sizing: border-box;
     border: 1px solid #d1d5db;
     border-radius: 7px;
     padding: 0 12px;
     font-size: 14px;
     background: #ffffff;
-    box-sizing: border-box;
-}
-
-.filters select {
-    width: 180px;
 }
 
 .search-box input:focus,
-.filters select:focus,
 .form-group input:focus,
-.form-group select:focus,
 .form-group textarea:focus {
     outline: none;
     border-color: #2563eb;
@@ -145,7 +134,7 @@
 
 .table-container table {
     width: 100%;
-    min-width: 1250px;
+    min-width: 1050px;
     border-collapse: collapse;
 }
 
@@ -172,81 +161,20 @@
     background: #fafafa;
 }
 
-.description-cell {
-    max-width: 260px;
+.address-cell {
+    max-width: 250px;
     line-height: 1.4;
 }
 
-.location-cell {
-    min-width: 150px;
+.coordinate-cell {
+    font-family: monospace;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
-.report-type-cell {
+.city-cell {
     font-weight: 600;
     color: #111827;
-    white-space: nowrap;
-}
-
-
-/* =========================================
-   BADGES
-   ========================================= */
-
-.report-badge,
-.severity-badge,
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 9px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.report-badge {
-    background: #eef2ff;
-    color: #4338ca;
-}
-
-.severity-low {
-    background: #ecfdf5;
-    color: #047857;
-}
-
-.severity-medium {
-    background: #fffbeb;
-    color: #b45309;
-}
-
-.severity-high {
-    background: #fff7ed;
-    color: #c2410c;
-}
-
-.severity-critical {
-    background: #fef2f2;
-    color: #b91c1c;
-}
-
-.status-pending {
-    background: #fffbeb;
-    color: #b45309;
-}
-
-.status-in-progress {
-    background: #eff6ff;
-    color: #1d4ed8;
-}
-
-.status-resolved {
-    background: #ecfdf5;
-    color: #047857;
-}
-
-.status-rejected {
-    background: #f3f4f6;
-    color: #4b5563;
 }
 
 
@@ -303,7 +231,7 @@
 
 .modal {
     width: 100%;
-    max-width: 720px;
+    max-width: 680px;
     max-height: 90vh;
     overflow-y: auto;
     background: #ffffff;
@@ -349,7 +277,7 @@
    FORM
    ========================================= */
 
-#report-form {
+#location-form {
     padding: 25px;
 }
 
@@ -380,7 +308,6 @@
 }
 
 .form-group input,
-.form-group select,
 .form-group textarea {
     width: 100%;
     box-sizing: border-box;
@@ -395,7 +322,12 @@
 
 .form-group textarea {
     resize: vertical;
-    min-height: 95px;
+    min-height: 85px;
+}
+
+.form-group small {
+    font-size: 11px;
+    color: #9ca3af;
 }
 
 
@@ -414,7 +346,7 @@
 
 
 /* =========================================
-   BUTTON COMPATIBILITY
+   SIDEBAR COMPATIBILITY
    ========================================= */
 
 .brand {
@@ -440,23 +372,17 @@
    RESPONSIVE
    ========================================= */
 
-@media (max-width: 1200px) {
+@media (max-width: 1100px) {
+
     .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 800px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
 
     .filters {
         flex-direction: column;
-    }
-
-    .filters select {
-        width: 100%;
     }
 
     .form-grid {
@@ -469,6 +395,7 @@
 }
 
 @media (max-width: 550px) {
+
     .stats-grid {
         grid-template-columns: 1fr;
     }

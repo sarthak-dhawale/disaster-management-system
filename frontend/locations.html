@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Locations - Disaster Management System</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/locations.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                🚨
+            </div>
+
+            <div>
+                <h2>Disaster<span>MS</span></h2>
+                <p>Management System</p>
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-title">
+                MAIN
+            </div>
+
+            <a href="index.html" class="nav-item">
+                📊
+                <span>Dashboard</span>
+            </a>
+
+
+            <div class="nav-title">
+                MANAGEMENT
+            </div>
+
+            <a href="disasters.html" class="nav-item">
+                ⚠️
+                <span>Disasters</span>
+            </a>
+
+            <a href="shelters.html" class="nav-item">
+                🏠
+                <span>Shelters</span>
+            </a>
+
+            <a href="volunteers.html" class="nav-item">
+                👥
+                <span>Volunteers</span>
+            </a>
+
+            <a href="resources.html" class="nav-item">
+                📦
+                <span>Resources</span>
+            </a>
+
+            <a href="emergency-reports.html" class="nav-item">
+                🆘
+                <span>Emergency Reports</span>
+            </a>
+
+
+            <div class="nav-title">
+                SYSTEM
+            </div>
+
+            <a href="locations.html" class="nav-item active">
+                📍
+                <span>Locations</span>
+            </a>
+
+            <a href="users.html" class="nav-item">
+                👤
+                <span>Users</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <span class="status-dot"></span>
+
+            System Online
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+
+            <div>
+                <h1>Locations</h1>
+                <p>Manage disaster response locations</p>
+            </div>
+
+            <button class="primary-btn" onclick="openAddModal()">
+                + Add Location
+            </button>
+
+        </header>
+
+
+        <!-- CONTENT -->
+        <section class="content">
+
+
+            <!-- STAT CARDS -->
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">📍</div>
+
+                    <div>
+                        <div class="stat-label">Total Locations</div>
+                        <div class="stat-value" id="total-count">0</div>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">🏙️</div>
+
+                    <div>
+                        <div class="stat-label">Cities</div>
+                        <div class="stat-value" id="city-count">0</div>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">🗺️</div>
+
+                    <div>
+                        <div class="stat-label">Districts</div>
+                        <div class="stat-value" id="district-count">0</div>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">🇮🇳</div>
+
+                    <div>
+                        <div class="stat-label">States</div>
+                        <div class="stat-value" id="state-count">0</div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- LOCATIONS PANEL -->
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Location Records</h2>
+                        <p>All registered geographical locations</p>
+                    </div>
+
+                    <button class="secondary-btn" onclick="loadLocations()">
+                        🔄 Refresh
+                    </button>
+
+                </div>
+
+
+                <!-- SEARCH -->
+                <div class="filters">
+
+                    <div class="search-box">
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Search by city, district, state or address..."
+                            oninput="filterLocations()"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- TABLE -->
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>ID</th>
+                                <th>City</th>
+                                <th>District</th>
+                                <th>State</th>
+                                <th>Address</th>
+                                <th>Latitude</th>
+                                <th>Longitude</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="locations-table-body">
+
+                            <tr>
+
+                                <td colspan="9" class="loading">
+                                    Loading locations...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="location-modal">
+
+    <div class="modal">
+
+
+        <!-- MODAL HEADER -->
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modal-title">Add Location</h2>
+                <p>Enter geographical location details</p>
+            </div>
+
+            <button class="modal-close" onclick="closeModal()">
+                &times;
+            </button>
+
+        </div>
+
+
+        <!-- FORM -->
+        <form id="location-form" onsubmit="saveLocation(event)">
+
+            <input type="hidden" id="location-id">
+
+
+            <div class="form-grid">
+
+
+                <!-- STATE -->
+                <div class="form-group">
+
+                    <label for="state">
+                        State <span>*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="state"
+                        placeholder="e.g. Maharashtra"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- DISTRICT -->
+                <div class="form-group">
+
+                    <label for="district">
+                        District <span>*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="district"
+                        placeholder="e.g. Pune"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- CITY -->
+                <div class="form-group">
+
+                    <label for="city">
+                        City <span>*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="city"
+                        placeholder="e.g. Pune"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- ADDRESS -->
+                <div class="form-group full-width">
+
+                    <label for="address">
+                        Address <span>*</span>
+                    </label>
+
+                    <textarea
+                        id="address"
+                        rows="3"
+                        placeholder="Enter complete address"
+                        required
+                    ></textarea>
+
+                </div>
+
+
+                <!-- LATITUDE -->
+                <div class="form-group">
+
+                    <label for="latitude">
+                        Latitude
+                    </label>
+
+                    <input
+                        type="number"
+                        id="latitude"
+                        step="any"
+                        min="-90"
+                        max="90"
+                        placeholder="e.g. 18.5204"
+                    >
+
+                    <small>
+                        Must be between -90 and 90
+                    </small>
+
+                </div>
+
+
+                <!-- LONGITUDE -->
+                <div class="form-group">
+
+                    <label for="longitude">
+                        Longitude
+                    </label>
+
+                    <input
+                        type="number"
+                        id="longitude"
+                        step="any"
+                        min="-180"
+                        max="180"
+                        placeholder="e.g. 73.8567"
+                    >
+
+                    <small>
+                        Must be between -180 and 180
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    onclick="closeModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                >
+                    Save Location
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<script src="js/common.js"></script>
+<script src="js/locations.js"></script>
+
+</body>
+</html>
