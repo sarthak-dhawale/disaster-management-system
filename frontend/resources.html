@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources - Disaster Management System</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/resources.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">🚨</div>
+
+            <div>
+                <h2>DisasterMS</h2>
+                <span>Management System</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-section-title">MAIN</div>
+
+            <a href="index.html" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-section-title">MANAGEMENT</div>
+
+            <a href="disasters.html" class="nav-link">
+                <span class="nav-icon">⚠️</span>
+                <span>Disasters</span>
+            </a>
+
+            <a href="shelters.html" class="nav-link">
+                <span class="nav-icon">🏠</span>
+                <span>Shelters</span>
+            </a>
+
+            <a href="volunteers.html" class="nav-link">
+                <span class="nav-icon">👥</span>
+                <span>Volunteers</span>
+            </a>
+
+            <a href="resources.html" class="nav-link active">
+                <span class="nav-icon">📦</span>
+                <span>Resources</span>
+            </a>
+
+            <a href="emergency-reports.html" class="nav-link">
+                <span class="nav-icon">🆘</span>
+                <span>Emergency<br>Reports</span>
+            </a>
+
+            <div class="nav-section-title">SYSTEM</div>
+
+            <a href="locations.html" class="nav-link">
+                <span class="nav-icon">📍</span>
+                <span>Locations</span>
+            </a>
+
+            <a href="users.html" class="nav-link">
+                <span class="nav-icon">👤</span>
+                <span>Users</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="online-dot"></span>
+            <span>System Online</span>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+
+            <div class="page-heading">
+                <h1>Resources</h1>
+                <p>Manage disaster response resources and inventory</p>
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="live-status">
+                    <span class="live-dot"></span>
+                    <span>Live System</span>
+                </div>
+
+                <div class="admin-profile">
+                    <div class="admin-avatar">A</div>
+
+                    <div>
+                        <strong>Administrator</strong>
+                        <small>System Admin</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+        <section class="content">
+
+            <!-- STAT CARDS -->
+            <div class="resource-stats">
+
+                <div class="resource-stat-card">
+
+                    <div class="stat-icon stat-icon-total">
+                        📦
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Resource Types</span>
+                        <strong id="total-count">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="resource-stat-card">
+
+                    <div class="stat-icon stat-icon-total-quantity">
+                        📊
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Total Quantity</span>
+                        <strong id="total-quantity">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="resource-stat-card">
+
+                    <div class="stat-icon stat-icon-available">
+                        ✅
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Available Quantity</span>
+                        <strong id="available-quantity">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="resource-stat-card">
+
+                    <div class="stat-icon stat-icon-low">
+                        ⚠️
+                    </div>
+
+                    <div class="stat-info">
+                        <span>Low Stock</span>
+                        <strong id="low-stock-count">0</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RESOURCE PANEL -->
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Resource Inventory</h2>
+                        <p>View, search and manage disaster response resources</p>
+                    </div>
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="openAddModal()"
+                    >
+                        + Add Resource
+                    </button>
+
+                </div>
+
+
+                <!-- FILTERS -->
+                <div class="filters">
+
+                    <div class="search-box">
+
+                        <span class="search-icon">🔎</span>
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Search resources..."
+                            oninput="applyFilters()"
+                        >
+
+                    </div>
+
+
+                    <select
+                        id="category-filter"
+                        onchange="applyFilters()"
+                    >
+
+                        <option value="ALL">All Categories</option>
+                        <option value="FOOD">Food</option>
+                        <option value="WATER">Water</option>
+                        <option value="MEDICINE">Medicine</option>
+                        <option value="CLOTHING">Clothing</option>
+                        <option value="EQUIPMENT">Equipment</option>
+                        <option value="SHELTER_SUPPLIES">Shelter Supplies</option>
+                        <option value="OTHER">Other</option>
+
+                    </select>
+
+
+                    <button
+                        class="btn btn-secondary"
+                        onclick="loadResources()"
+                    >
+                        ↻ Refresh
+                    </button>
+
+                </div>
+
+
+                <!-- ERROR -->
+                <div id="page-error" class="page-error"></div>
+
+
+                <!-- TABLE -->
+                <div class="table-wrapper">
+
+                    <table class="data-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>ID</th>
+                                <th>RESOURCE</th>
+                                <th>CATEGORY</th>
+                                <th>UNIT</th>
+                                <th>TOTAL</th>
+                                <th>AVAILABLE</th>
+                                <th>MINIMUM REQUIRED</th>
+                                <th>STOCK LEVEL</th>
+                                <th>UPDATED</th>
+                                <th>ACTIONS</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="resources-table-body">
+
+                            <tr>
+                                <td colspan="10" class="loading">
+                                    Loading resources...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ADD / EDIT MODAL -->
+<div id="resource-modal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modal-title">Add Resource</h2>
+                <p id="modal-subtitle">
+                    Add a new disaster response resource
+                </p>
+            </div>
+
+            <button
+                class="modal-close"
+                onclick="closeModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form
+            id="resource-form"
+            onsubmit="saveResource(event)"
+        >
+
+            <div class="form-group">
+
+                <label for="resource-name">
+                    Resource Name <span>*</span>
+                </label>
+
+                <input
+                    type="text"
+                    id="resource-name"
+                    required
+                    placeholder="Example: Rice"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="category">
+                    Category <span>*</span>
+                </label>
+
+                <select id="category" required>
+
+                    <option value="">Select Category</option>
+                    <option value="FOOD">FOOD</option>
+                    <option value="WATER">WATER</option>
+                    <option value="MEDICINE">MEDICINE</option>
+                    <option value="CLOTHING">CLOTHING</option>
+                    <option value="EQUIPMENT">EQUIPMENT</option>
+                    <option value="SHELTER_SUPPLIES">SHELTER_SUPPLIES</option>
+                    <option value="OTHER">OTHER</option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="unit">
+                    Unit <span>*</span>
+                </label>
+
+                <input
+                    type="text"
+                    id="unit"
+                    required
+                    placeholder="Example: kg, litres, boxes"
+                >
+
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="total-quantity-input">
+                        Total Quantity <span>*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        id="total-quantity-input"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="available-quantity-input">
+                        Available Quantity <span>*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        id="available-quantity-input"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="minimum-required">
+                    Minimum Required <span>*</span>
+                </label>
+
+                <input
+                    type="number"
+                    id="minimum-required"
+                    min="0"
+                    step="0.01"
+                    value="0"
+                    required
+                >
+
+            </div>
+
+
+            <div id="modal-error" class="modal-error"></div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="save-button"
+                >
+                    Save Resource
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/common.js"></script>
+<script src="js/resources.js"></script>
+
+</body>
+</html>
