@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Users - Disaster Management System</title>
+
+    <link
+        rel="stylesheet"
+        href="css/common.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/users.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+    <!-- =========================================
+         SIDEBAR
+         ========================================= -->
+
+    <aside class="sidebar">
+
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                🚨
+            </div>
+
+            <div>
+
+                <h2>
+                    Disaster<span>MS</span>
+                </h2>
+
+                <p>
+                    Management System
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+
+            <div class="nav-title">
+                MAIN
+            </div>
+
+
+            <a
+                href="index.html"
+                class="nav-item"
+            >
+                📊
+                <span>Dashboard</span>
+            </a>
+
+
+            <div class="nav-title">
+                MANAGEMENT
+            </div>
+
+
+            <a
+                href="disasters.html"
+                class="nav-item"
+            >
+                🌪️
+                <span>Disasters</span>
+            </a>
+
+
+            <a
+                href="shelters.html"
+                class="nav-item"
+            >
+                🏠
+                <span>Shelters</span>
+            </a>
+
+
+            <a
+                href="volunteers.html"
+                class="nav-item"
+            >
+                👥
+                <span>Volunteers</span>
+            </a>
+
+
+            <a
+                href="resources.html"
+                class="nav-item"
+            >
+                📦
+                <span>Resources</span>
+            </a>
+
+
+            <a
+                href="emergency-reports.html"
+                class="nav-item"
+            >
+                🆘
+                <span>Emergency Reports</span>
+            </a>
+
+
+            <div class="nav-title">
+                SYSTEM
+            </div>
+
+
+            <a
+                href="locations.html"
+                class="nav-item"
+            >
+                📍
+                <span>Locations</span>
+            </a>
+
+
+            <a
+                href="users.html"
+                class="nav-item active"
+            >
+                👤
+                <span>Users</span>
+            </a>
+
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <span class="status-dot"></span>
+
+            System Online
+
+        </div>
+
+
+    </aside>
+
+
+
+    <!-- =========================================
+         MAIN CONTENT
+         ========================================= -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+
+            <div>
+
+                <h1>
+                    Users
+                </h1>
+
+                <p>
+                    Manage system users and access roles
+                </p>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+
+                <div class="live-status">
+
+                    <span class="live-dot"></span>
+
+                    Live System
+
+                </div>
+
+
+                <div class="profile">
+
+                    <div class="profile-avatar">
+                        A
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Administrator
+                        </strong>
+
+                        <small>
+                            System Admin
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </header>
+
+
+
+        <!-- =========================================
+             PAGE CONTENT
+             ========================================= -->
+
+        <section class="content">
+
+
+            <!-- =====================================
+                 STATISTICS
+                 ===================================== -->
+
+            <div class="user-stats">
+
+
+                <div class="user-stat-card">
+
+                    <div class="user-stat-icon">
+                        👥
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Total Users
+                        </span>
+
+                        <strong id="total-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="user-stat-card">
+
+                    <div class="user-stat-icon active-icon">
+                        ✅
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Active
+                        </span>
+
+                        <strong id="active-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="user-stat-card">
+
+                    <div class="user-stat-icon inactive-icon">
+                        ⏸️
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Inactive
+                        </span>
+
+                        <strong id="inactive-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="user-stat-card">
+
+                    <div class="user-stat-icon suspended-icon">
+                        🚫
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Suspended
+                        </span>
+
+                        <strong id="suspended-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =====================================
+                 USERS PANEL
+                 ===================================== -->
+
+            <div class="panel">
+
+
+                <!-- PANEL HEADER -->
+
+                <div class="panel-header user-panel-header">
+
+
+                    <div>
+
+                        <h3>
+                            User Records
+                        </h3>
+
+                        <p>
+                            View, search and manage system users
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="primary-btn"
+                        id="add-user-btn"
+                        onclick="openAddModal()"
+                    >
+                        + Add User
+                    </button>
+
+
+                </div>
+
+
+
+                <!-- =================================
+                     SEARCH / FILTER
+                     ================================= -->
+
+                <div class="filters">
+
+
+                    <div class="search-box">
+
+                        <span>
+                            🔎
+                        </span>
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Search users..."
+                            oninput="filterUsers()"
+                        >
+
+                    </div>
+
+
+                    <select
+                        id="role-filter"
+                        onchange="filterUsers()"
+                    >
+
+                        <option value="">
+                            All Roles
+                        </option>
+
+                        <option value="ADMIN">
+                            Admin
+                        </option>
+
+                        <option value="DISASTER_MANAGER">
+                            Disaster Manager
+                        </option>
+
+                        <option value="VOLUNTEER">
+                            Volunteer
+                        </option>
+
+                        <option value="PUBLIC_USER">
+                            Public User
+                        </option>
+
+                    </select>
+
+
+                    <select
+                        id="status-filter"
+                        onchange="filterUsers()"
+                    >
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="ACTIVE">
+                            Active
+                        </option>
+
+                        <option value="INACTIVE">
+                            Inactive
+                        </option>
+
+                        <option value="SUSPENDED">
+                            Suspended
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        class="secondary-btn"
+                        onclick="loadUsers()"
+                    >
+                        🔄 Refresh
+                    </button>
+
+
+                </div>
+
+
+
+                <!-- =================================
+                     TABLE
+                     ================================= -->
+
+                <div class="table-container">
+
+
+                    <table>
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    ID
+                                </th>
+
+                                <th>
+                                    User
+                                </th>
+
+                                <th>
+                                    Email
+                                </th>
+
+                                <th>
+                                    Phone
+                                </th>
+
+                                <th>
+                                    Role
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Created At
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="users-table-body">
+
+
+                            <tr>
+
+                                <td
+                                    colspan="8"
+                                    class="loading"
+                                >
+                                    Loading users...
+                                </td>
+
+                            </tr>
+
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =============================================
+     ADD / EDIT USER MODAL
+     ============================================= -->
+
+<div
+    class="modal-overlay"
+    id="user-modal"
+>
+
+
+    <div class="modal">
+
+
+        <!-- MODAL HEADER -->
+
+        <div class="modal-header">
+
+
+            <div>
+
+                <h2 id="modal-title">
+                    Add User
+                </h2>
+
+                <p>
+                    Enter user account details
+                </p>
+
+            </div>
+
+
+            <button
+                class="modal-close"
+                onclick="closeModal()"
+            >
+                &times;
+            </button>
+
+
+        </div>
+
+
+
+        <!-- FORM -->
+
+        <form
+            id="user-form"
+            onsubmit="saveUser(event)"
+        >
+
+
+            <input
+                type="hidden"
+                id="user-id"
+            >
+
+
+            <div class="form-grid">
+
+
+                <!-- FULL NAME -->
+
+                <div class="form-group">
+
+                    <label for="full-name">
+
+                        Full Name
+
+                        <span>*</span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="full-name"
+                        placeholder="Enter full name"
+                        required
+                    >
+
+                </div>
+
+
+
+                <!-- EMAIL -->
+
+                <div class="form-group">
+
+                    <label for="email">
+
+                        Email
+
+                        <span>*</span>
+
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="example@email.com"
+                        required
+                    >
+
+                </div>
+
+
+
+                <!-- PASSWORD HASH -->
+
+                <div class="form-group">
+
+                    <label for="password-hash">
+
+                        Password Hash
+
+                        <span>*</span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="password-hash"
+                        placeholder="Enter password hash"
+                        required
+                    >
+
+                    <small>
+                        Stored as password_hash by the backend.
+                    </small>
+
+                </div>
+
+
+
+                <!-- PHONE -->
+
+                <div class="form-group">
+
+                    <label for="phone">
+
+                        Phone
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="phone"
+                        placeholder="Enter phone number"
+                    >
+
+                </div>
+
+
+
+                <!-- ROLE -->
+
+                <div class="form-group">
+
+                    <label for="role">
+
+                        Role
+
+                        <span>*</span>
+
+                    </label>
+
+                    <select
+                        id="role"
+                        required
+                    >
+
+                        <option value="PUBLIC_USER">
+                            Public User
+                        </option>
+
+                        <option value="VOLUNTEER">
+                            Volunteer
+                        </option>
+
+                        <option value="DISASTER_MANAGER">
+                            Disaster Manager
+                        </option>
+
+                        <option value="ADMIN">
+                            Admin
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <!-- STATUS -->
+
+                <div class="form-group">
+
+                    <label for="status">
+
+                        Status
+
+                        <span>*</span>
+
+                    </label>
+
+                    <select
+                        id="status"
+                        required
+                    >
+
+                        <option value="ACTIVE">
+                            Active
+                        </option>
+
+                        <option value="INACTIVE">
+                            Inactive
+                        </option>
+
+                        <option value="SUSPENDED">
+                            Suspended
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- MODAL FOOTER -->
+
+            <div class="modal-footer">
+
+
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    onclick="closeModal()"
+                >
+                    Cancel
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                >
+                    Save User
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+
+</div>
+
+
+
+<script src="js/common.js"></script>
+
+<script src="js/users.js"></script>
+
+
+</body>
+
+</html>
