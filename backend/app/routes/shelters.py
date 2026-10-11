@@ -1,318 +1,49 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import text
 from app.database import get_db
+from app.models import ShelterCreate, ShelterUpdate
+from app.security import require_admin
+from app.listing import list_options, list_records
+from app.crud import simple_save, simple_delete
 
-router = APIRouter(
-    prefix="/api/shelters",
-    tags=["Shelters"]
-)
-
-
-class ShelterCreate(BaseModel):
-    location_id: int
-    name: str
-    capacity: int
-    current_occupancy: int = 0
-    contact_phone: Optional[str] = None
-    status: str = "AVAILABLE"
-
-
-class ShelterUpdate(BaseModel):
-    location_id: int
-    name: str
-    capacity: int
-    current_occupancy: int
-    contact_phone: Optional[str] = None
-    status: str
+router = APIRouter(prefix="/api/shelters", tags=["Shelters"], dependencies=[Depends(require_admin)])
+LIST_SQL = "SELECT s.*,l.city,l.district,l.state,l.address FROM shelters s JOIN locations l ON l.location_id=s.location_id ORDER BY s.shelter_id DESC"
 
 
 @router.get("/")
-def get_all_shelters(db: Session = Depends(get_db)):
-    query = text("""
-        SELECT
-            shelter_id,
-            location_id,
-            name,
-            capacity,
-            current_occupancy,
-            contact_phone,
-            status,
-            created_at
-        FROM shelters
-        ORDER BY shelter_id DESC
-    """)
-
-    result = db.execute(query).mappings().all()
-
-    return {
-        "count": len(result),
-        "shelters": [dict(row) for row in result]
-    }
+def get_all(db=Depends(get_db), options=Depends(list_options)):
+    return list_records(db, LIST_SQL, "shelters", options)
 
 
-@router.post("/")
-def create_shelter(
-    shelter: ShelterCreate,
-    db: Session = Depends(get_db)
-):
-    # Check whether location exists
-    location_check = db.execute(
-        text("""
-            SELECT location_id
-            FROM locations
-            WHERE location_id = :location_id
-        """),
-        {"location_id": shelter.location_id}
-    ).first()
-
-    if not location_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Location not found"
+@router.get("/{id}")
+def get_one(id: int = Path(gt=0), db=Depends(get_db)):
+    row = (
+        db.execute(
+            text(
+                "SELECT s.*,l.city,l.district,l.state,l.address FROM shelters s JOIN locations l ON l.location_id=s.location_id  WHERE shelter_id=:id"
+            ),
+            {"id": id},
         )
-
-    # Validate capacity
-    if shelter.capacity <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Capacity must be greater than 0"
-        )
-
-    # Validate occupancy
-    if shelter.current_occupancy < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Current occupancy cannot be negative"
-        )
-
-    if shelter.current_occupancy > shelter.capacity:
-        raise HTTPException(
-            status_code=400,
-            detail="Current occupancy cannot exceed capacity"
-        )
-
-    # Validate status
-    valid_statuses = ["AVAILABLE", "FULL", "CLOSED"]
-
-    if shelter.status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail="Status must be AVAILABLE, FULL, or CLOSED"
-        )
-
-    query = text("""
-        INSERT INTO shelters
-        (
-            location_id,
-            name,
-            capacity,
-            current_occupancy,
-            contact_phone,
-            status
-        )
-        VALUES
-        (
-            :location_id,
-            :name,
-            :capacity,
-            :current_occupancy,
-            :contact_phone,
-            :status
-        )
-    """)
-
-    result = db.execute(
-        query,
-        {
-            "location_id": shelter.location_id,
-            "name": shelter.name,
-            "capacity": shelter.capacity,
-            "current_occupancy": shelter.current_occupancy,
-            "contact_phone": shelter.contact_phone,
-            "status": shelter.status
-        }
+        .mappings()
+        .first()
     )
-
-    db.commit()
-
-    shelter_id = result.lastrowid
-
-    return {
-        "message": "Shelter created successfully",
-        "shelter_id": shelter_id
-    }
+    if not row:
+        raise HTTPException(404, "Record not found")
+    return dict(row)
 
 
-@router.get("/{shelter_id}")
-def get_shelter(
-    shelter_id: int,
-    db: Session = Depends(get_db)
+@router.post("/", status_code=201)
+def create(body: ShelterCreate, db=Depends(get_db), user=Depends(require_admin)):
+    return simple_save(db, "shelters", body)
+
+
+@router.put("/{id}")
+def edit(
+    body: ShelterUpdate, id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_admin)
 ):
-    query = text("""
-        SELECT
-            shelter_id,
-            location_id,
-            name,
-            capacity,
-            current_occupancy,
-            contact_phone,
-            status,
-            created_at
-        FROM shelters
-        WHERE shelter_id = :shelter_id
-    """)
-
-    result = db.execute(
-        query,
-        {"shelter_id": shelter_id}
-    ).mappings().first()
-
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="Shelter not found"
-        )
-
-    return dict(result)
+    return simple_save(db, "shelters", body, id)
 
 
-@router.put("/{shelter_id}")
-def update_shelter(
-    shelter_id: int,
-    shelter: ShelterUpdate,
-    db: Session = Depends(get_db)
-):
-    # Check whether shelter exists
-    shelter_check = db.execute(
-        text("""
-            SELECT shelter_id
-            FROM shelters
-            WHERE shelter_id = :shelter_id
-        """),
-        {"shelter_id": shelter_id}
-    ).first()
-
-    if not shelter_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Shelter not found"
-        )
-
-    # Check whether location exists
-    location_check = db.execute(
-        text("""
-            SELECT location_id
-            FROM locations
-            WHERE location_id = :location_id
-        """),
-        {"location_id": shelter.location_id}
-    ).first()
-
-    if not location_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Location not found"
-        )
-
-    # Validate capacity
-    if shelter.capacity <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Capacity must be greater than 0"
-        )
-
-    # Validate occupancy
-    if shelter.current_occupancy < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Current occupancy cannot be negative"
-        )
-
-    if shelter.current_occupancy > shelter.capacity:
-        raise HTTPException(
-            status_code=400,
-            detail="Current occupancy cannot exceed capacity"
-        )
-
-    # Validate status
-    valid_statuses = ["AVAILABLE", "FULL", "CLOSED"]
-
-    if shelter.status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail="Status must be AVAILABLE, FULL, or CLOSED"
-        )
-
-    query = text("""
-        UPDATE shelters
-        SET
-            location_id = :location_id,
-            name = :name,
-            capacity = :capacity,
-            current_occupancy = :current_occupancy,
-            contact_phone = :contact_phone,
-            status = :status
-        WHERE shelter_id = :shelter_id
-    """)
-
-    db.execute(
-        query,
-        {
-            "shelter_id": shelter_id,
-            "location_id": shelter.location_id,
-            "name": shelter.name,
-            "capacity": shelter.capacity,
-            "current_occupancy": shelter.current_occupancy,
-            "contact_phone": shelter.contact_phone,
-            "status": shelter.status
-        }
-    )
-
-    db.commit()
-
-    return {
-        "message": "Shelter updated successfully",
-        "shelter_id": shelter_id
-    }
-
-
-@router.delete("/{shelter_id}")
-def delete_shelter(
-    shelter_id: int,
-    db: Session = Depends(get_db)
-):
-    # Check whether shelter exists
-    shelter_check = db.execute(
-        text("""
-            SELECT shelter_id
-            FROM shelters
-            WHERE shelter_id = :shelter_id
-        """),
-        {"shelter_id": shelter_id}
-    ).first()
-
-    if not shelter_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Shelter not found"
-        )
-
-    query = text("""
-        DELETE FROM shelters
-        WHERE shelter_id = :shelter_id
-    """)
-
-    db.execute(
-        query,
-        {"shelter_id": shelter_id}
-    )
-
-    db.commit()
-
-    return {
-        "message": "Shelter deleted successfully",
-        "shelter_id": shelter_id
-    }
+@router.delete("/{id}")
+def delete(id: int = Path(gt=0), db=Depends(get_db)):
+    return simple_delete(db, "shelters", id)

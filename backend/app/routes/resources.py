@@ -1,274 +1,59 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import text
-
 from app.database import get_db
+from app.models import ResourceCreate, ResourceUpdate
+from app.security import require_admin
+from app.listing import list_options, list_records
+from app.crud import simple_save, simple_delete
 
-router = APIRouter(prefix="/api/resources", tags=["Resources"])
-
-
-class ResourceCreate(BaseModel):
-    resource_name: str
-    category: str
-    unit: str
-    total_quantity: float = 0
-    available_quantity: float = 0
-    minimum_required: float = 0
-
-
-class ResourceUpdate(BaseModel):
-    resource_name: str
-    category: str
-    unit: str
-    total_quantity: float
-    available_quantity: float
-    minimum_required: float
-
-
-VALID_CATEGORIES = [
-    "FOOD",
-    "WATER",
-    "MEDICINE",
-    "CLOTHING",
-    "EQUIPMENT",
-    "SHELTER_SUPPLIES",
-    "OTHER"
-]
-
-
-def validate_resource(resource):
-    if resource.category not in VALID_CATEGORIES:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid resource category"
-        )
-
-    if resource.total_quantity < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Total quantity cannot be negative"
-        )
-
-    if resource.available_quantity < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Available quantity cannot be negative"
-        )
-
-    if resource.available_quantity > resource.total_quantity:
-        raise HTTPException(
-            status_code=400,
-            detail="Available quantity cannot exceed total quantity"
-        )
-
-    if resource.minimum_required < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Minimum required cannot be negative"
-        )
+router = APIRouter(
+    prefix="/api/resources", tags=["Resources"], dependencies=[Depends(require_admin)]
+)
+LIST_SQL = """
+SELECT resource_id, resource_name, category, unit, total_quantity, available_quantity, minimum_required,
+       updated_at
+FROM resources
+ORDER BY resource_id DESC
+"""
 
 
 @router.get("/")
-def get_all_resources(db: Session = Depends(get_db)):
-    query = text("""
-        SELECT
-            resource_id,
-            resource_name,
-            category,
-            unit,
-            total_quantity,
-            available_quantity,
-            minimum_required,
-            updated_at
-        FROM resources
-        ORDER BY resource_id DESC
-    """)
-
-    result = db.execute(query).mappings().all()
-
-    return {
-        "count": len(result),
-        "resources": [dict(row) for row in result]
-    }
+def get_all(db=Depends(get_db), options=Depends(list_options)):
+    return list_records(db, LIST_SQL, "resources", options)
 
 
-@router.get("/{resource_id}")
-def get_resource(
-    resource_id: int,
-    db: Session = Depends(get_db)
-):
-    query = text("""
-        SELECT
-            resource_id,
-            resource_name,
-            category,
-            unit,
-            total_quantity,
-            available_quantity,
-            minimum_required,
-            updated_at
-        FROM resources
-        WHERE resource_id = :resource_id
-    """)
-
-    result = db.execute(
-        query,
-        {"resource_id": resource_id}
-    ).mappings().first()
-
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="Resource not found"
-        )
-
-    return dict(result)
-
-
-@router.post("/")
-def create_resource(
-    resource: ResourceCreate,
-    db: Session = Depends(get_db)
-):
-    validate_resource(resource)
-
-    query = text("""
-        INSERT INTO resources (
-            resource_name,
-            category,
-            unit,
-            total_quantity,
-            available_quantity,
-            minimum_required
-        )
-        VALUES (
-            :resource_name,
-            :category,
-            :unit,
-            :total_quantity,
-            :available_quantity,
-            :minimum_required
-        )
-    """)
-
-    result = db.execute(
-        query,
-        {
-            "resource_name": resource.resource_name,
-            "category": resource.category,
-            "unit": resource.unit,
-            "total_quantity": resource.total_quantity,
-            "available_quantity": resource.available_quantity,
-            "minimum_required": resource.minimum_required
-        }
-    )
-
-    db.commit()
-
-    return {
-        "message": "Resource created successfully",
-        "resource_id": result.lastrowid
-    }
-
-
-@router.put("/{resource_id}")
-def update_resource(
-    resource_id: int,
-    resource: ResourceUpdate,
-    db: Session = Depends(get_db)
-):
-    resource_check = db.execute(
-        text("""
-            SELECT resource_id
-            FROM resources
-            WHERE resource_id = :resource_id
-        """),
-        {"resource_id": resource_id}
-    ).first()
-
-    if not resource_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Resource not found"
-        )
-
-    validate_resource(resource)
-
-    query = text("""
-        UPDATE resources
-        SET
-            resource_name = :resource_name,
-            category = :category,
-            unit = :unit,
-            total_quantity = :total_quantity,
-            available_quantity = :available_quantity,
-            minimum_required = :minimum_required
-        WHERE resource_id = :resource_id
-    """)
-
-    db.execute(
-        query,
-        {
-            "resource_id": resource_id,
-            "resource_name": resource.resource_name,
-            "category": resource.category,
-            "unit": resource.unit,
-            "total_quantity": resource.total_quantity,
-            "available_quantity": resource.available_quantity,
-            "minimum_required": resource.minimum_required
-        }
-    )
-
-    db.commit()
-
-    return {
-        "message": "Resource updated successfully",
-        "resource_id": resource_id
-    }
-
-
-@router.delete("/{resource_id}")
-def delete_resource(
-    resource_id: int,
-    db: Session = Depends(get_db)
-):
-    resource_check = db.execute(
-        text("""
-            SELECT resource_id
-            FROM resources
-            WHERE resource_id = :resource_id
-        """),
-        {"resource_id": resource_id}
-    ).first()
-
-    if not resource_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Resource not found"
-        )
-
-    try:
+@router.get("/{id}")
+def get_one(id: int = Path(gt=0), db=Depends(get_db)):
+    row = (
         db.execute(
             text("""
-                DELETE FROM resources
-                WHERE resource_id = :resource_id
-            """),
-            {"resource_id": resource_id}
+SELECT resource_id, resource_name, category, unit, total_quantity, available_quantity, minimum_required,
+       updated_at
+FROM resources
+WHERE resource_id=:id
+"""),
+            {"id": id},
         )
+        .mappings()
+        .first()
+    )
+    if not row:
+        raise HTTPException(404, "Record not found")
+    return dict(row)
 
-        db.commit()
 
-    except Exception:
-        db.rollback()
+@router.post("/", status_code=201)
+def create(body: ResourceCreate, db=Depends(get_db), user=Depends(require_admin)):
+    return simple_save(db, "resources", body)
 
-        raise HTTPException(
-            status_code=400,
-            detail="Resource cannot be deleted because it is being used by another record"
-        )
 
-    return {
-        "message": "Resource deleted successfully",
-        "resource_id": resource_id
-    }
+@router.put("/{id}")
+def edit(
+    body: ResourceUpdate, id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_admin)
+):
+    return simple_save(db, "resources", body, id)
+
+
+@router.delete("/{id}")
+def delete(id: int = Path(gt=0), db=Depends(get_db)):
+    return simple_delete(db, "resources", id)

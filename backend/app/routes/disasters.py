@@ -1,176 +1,51 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import text
-from sqlalchemy.orm import Session
-
 from app.database import get_db
-from app.schemas import DisasterCreate, DisasterUpdate
-
+from app.models import DisasterCreate, DisasterUpdate
+from app.security import require_admin
+from app.listing import list_options, list_records
+from app.crud import simple_save, simple_delete
 
 router = APIRouter(
-    prefix="/api/disasters",
-    tags=["Disasters"]
+    prefix="/api/disasters", tags=["Disasters"], dependencies=[Depends(require_admin)]
 )
+LIST_SQL = "SELECT d.*,l.city,l.district,l.state,l.address FROM disasters d JOIN locations l ON l.location_id=d.location_id ORDER BY d.disaster_id DESC"
 
 
 @router.get("/")
-def get_all_disasters(db: Session = Depends(get_db)):
-    query = text("""
-        SELECT *
-        FROM disasters
-        ORDER BY disaster_id DESC
-    """)
-
-    result = db.execute(query)
-
-    disasters = [dict(row) for row in result.mappings().all()]
-
-    return {
-        "count": len(disasters),
-        "disasters": disasters
-    }
+def get_all(db=Depends(get_db), options=Depends(list_options)):
+    return list_records(db, LIST_SQL, "disasters", options)
 
 
-@router.get("/{disaster_id}")
-def get_disaster(
-    disaster_id: int,
-    db: Session = Depends(get_db)
-):
-    query = text("""
-        SELECT *
-        FROM disasters
-        WHERE disaster_id = :disaster_id
-    """)
-
-    result = db.execute(
-        query,
-        {"disaster_id": disaster_id}
-    ).mappings().first()
-
-    if result is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Disaster not found"
+@router.get("/{id}")
+def get_one(id: int = Path(gt=0), db=Depends(get_db)):
+    row = (
+        db.execute(
+            text(
+                "SELECT d.*,l.city,l.district,l.state,l.address FROM disasters d JOIN locations l ON l.location_id=d.location_id  WHERE disaster_id=:id"
+            ),
+            {"id": id},
         )
-
-    return dict(result)
-
-
-@router.post("/")
-def create_disaster(
-    disaster: DisasterCreate,
-    db: Session = Depends(get_db)
-):
-    query = text("""
-        INSERT INTO disasters (
-            location_id,
-            reported_by,
-            disaster_type,
-            title,
-            description,
-            severity,
-            status,
-            start_time,
-            end_time
-        )
-        VALUES (
-            :location_id,
-            :reported_by,
-            :disaster_type,
-            :title,
-            :description,
-            :severity,
-            :status,
-            :start_time,
-            :end_time
-        )
-    """)
-
-    result = db.execute(
-        query,
-        disaster.model_dump()
+        .mappings()
+        .first()
     )
-
-    db.commit()
-
-    return {
-        "message": "Disaster created successfully",
-        "disaster_id": result.lastrowid
-    }
+    if not row:
+        raise HTTPException(404, "Record not found")
+    return dict(row)
 
 
-@router.put("/{disaster_id}")
-def update_disaster(
-    disaster_id: int,
-    disaster: DisasterUpdate,
-    db: Session = Depends(get_db)
+@router.post("/", status_code=201)
+def create(body: DisasterCreate, db=Depends(get_db), user=Depends(require_admin)):
+    return simple_save(db, "disasters", body)
+
+
+@router.put("/{id}")
+def edit(
+    body: DisasterUpdate, id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_admin)
 ):
-    data = disaster.model_dump(exclude_unset=True)
-
-    if not data:
-        raise HTTPException(
-            status_code=400,
-            detail="No fields provided for update"
-        )
-
-    set_parts = []
-
-    for field in data:
-        set_parts.append(
-            f"{field} = :{field}"
-        )
-
-    data["disaster_id"] = disaster_id
-
-    query = text(f"""
-        UPDATE disasters
-        SET {", ".join(set_parts)}
-        WHERE disaster_id = :disaster_id
-    """)
-
-    result = db.execute(query, data)
-
-    if result.rowcount == 0:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=404,
-            detail="Disaster not found"
-        )
-
-    db.commit()
-
-    return {
-        "message": "Disaster updated successfully",
-        "disaster_id": disaster_id
-    }
+    return simple_save(db, "disasters", body, id)
 
 
-@router.delete("/{disaster_id}")
-def delete_disaster(
-    disaster_id: int,
-    db: Session = Depends(get_db)
-):
-    query = text("""
-        DELETE FROM disasters
-        WHERE disaster_id = :disaster_id
-    """)
-
-    result = db.execute(
-        query,
-        {"disaster_id": disaster_id}
-    )
-
-    if result.rowcount == 0:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=404,
-            detail="Disaster not found"
-        )
-
-    db.commit()
-
-    return {
-        "message": "Disaster deleted successfully",
-        "disaster_id": disaster_id
-    }
+@router.delete("/{id}")
+def delete(id: int = Path(gt=0), db=Depends(get_db)):
+    return simple_delete(db, "disasters", id)

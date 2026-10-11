@@ -1,0 +1,99 @@
+/* Browser Print / Save as PDF; native PDF generation is intentionally not claimed. */
+@page {
+  size: A4;
+  margin: 18mm 15mm 20mm;
+  @bottom-center {
+    content: 'Disaster Management System · Page ' counter(page);
+    font: 9pt sans-serif;
+    color: #555;
+  }
+}
+@media print {
+  :root,
+  :root[data-theme='dark'] {
+    color-scheme: light;
+    --surface: #fff;
+    --surface2: #f4f4f4;
+    --text: #202020;
+    --muted: #555;
+    --line: #ccc;
+    --accent: #994500;
+    --bg: #fff;
+  }
+  body {
+    background: #fff;
+    font-size: 10pt;
+  }
+  .layout,
+  .workspace {
+    display: block;
+  }
+  .sidebar,
+  .topbar,
+  .skip,
+  .toast,
+  .no-print,
+  .page-heading,
+  .related-nav,
+  #page-error {
+    display: none !important;
+  }
+  .content {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .report-document {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+  .print-only {
+    display: block;
+  }
+  table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tfoot {
+    display: table-footer-group;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  td,
+  th {
+    padding: 7px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-size: 9pt;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  h2 {
+    font-size: 14pt;
+  }
+  .timeline li {
+    break-inside: avoid;
+  }
+  .report-document p {
+    orphans: 3;
+    widows: 3;
+  }
+  .table-wrap {
+    overflow: visible;
+  }
+  .report-footer {
+    margin-top: 24px;
+    font-size: 9pt;
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
+  }
+}

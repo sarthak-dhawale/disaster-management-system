@@ -4,14 +4,19 @@ services:
     container_name: disaster-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: disaster123
-      MYSQL_DATABASE: disaster_management
-      MYSQL_USER: disaster_user
-      MYSQL_PASSWORD: disaster123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in root .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-disaster_management}
+      MYSQL_USER: ${MYSQL_USER:-disaster_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in root .env}
     ports:
-      - "3306:3306"
+      - '127.0.0.1:3306:3306'
     volumes:
       - disaster_mysql_data:/var/lib/mysql
-
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 volumes:
   disaster_mysql_data:

@@ -1,0 +1,1 @@
+DMS.start('india-map');

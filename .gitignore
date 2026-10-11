@@ -1,14 +1,19 @@
+
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
 
-# Virtual environment
+# Virtual environments
+.venv/
+venv/
 backend/venv/
 
-# Environment variables
+# Environment variables and secrets
 .env
-backend/.env
+.env.*
+!.env.example
+!backend/.env.example
 
 # VS Code
 .vscode/
@@ -16,3 +21,19 @@ backend/.env
 # OS
 .DS_Store
 Thumbs.db
+
+# Test and lint caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+backend/.coverage
+htmlcov/
+backend/htmlcov/
+
+# Logs
+*.log
+
+# Database backups and dumps
+*.bak
+*.sql.bak
+/dms-before-*.sql
