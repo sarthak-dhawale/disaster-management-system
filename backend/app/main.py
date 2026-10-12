@@ -26,15 +26,18 @@ from app.routes import (
     intelligence,
     demand,
     exports,
+    planning,
+    reports_v3,
 )
 
 app = FastAPI(
-    title="Disaster Management System", version="2.0.0", dependencies=[Depends(check_write_request)]
+    title="Disaster Management System", version="3.0.0", dependencies=[Depends(check_write_request)]
 )
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ORIGINS,
     allow_credentials=True,
+    expose_headers=["Content-Disposition"],
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type", "X-DMS-Request"],
 )
@@ -56,6 +59,8 @@ for module in [
     intelligence,
     demand,
     exports,
+    planning,
+    reports_v3,
 ]:
     app.include_router(module.router)
 
@@ -102,14 +107,16 @@ async def sql_error(request, exc):
 @app.exception_handler(Exception)
 async def unexpected_error(request, exc):
     logging.getLogger("dms").error("Request failed: %s", type(exc).__name__)
-    return JSONResponse(
-        status_code=500, content={"detail": "Unexpected server error. Please retry."}
-    )
+    # ServerErrorMiddleware is outside CORS middleware; keep allowed clients able
+    # to read the sanitized error rather than seeing a misleading network failure.
+    origin = request.headers.get("origin")
+    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true", "Vary": "Origin"} if origin in ORIGINS else {}
+    return JSONResponse(status_code=500, content={"detail": "Unexpected server error. Please retry."}, headers=headers)
 
 
 @app.get("/")
 def root():
-    return {"message": "Disaster Management System API is running", "version": "2.0.0"}
+    return {"message": "Disaster Management System API is running", "version": "3.0.0"}
 
 
 @app.get("/health")
