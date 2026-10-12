@@ -600,3 +600,156 @@ def test_real_mysql_v2_request_reporting_and_geography(mysql_clients):
     assert admin.get(f"/api/intelligence/disaster/{disaster}/report").status_code == 200
     assert admin.get(f"/api/exports/disasters.csv?record_id={disaster}").status_code == 200
     assert public.get("/api/exports/resources.csv").status_code == 403
+
+
+def test_real_mysql_v3_intelligence_exports_and_readonly_simulator(mysql_clients):
+    """Runs only under the same dedicated-empty-*_test safety gate above."""
+    from unittest.mock import patch
+    from app.routes import planning
+    from io import BytesIO
+    from pypdf import PdfReader
+
+    admin, public, tracked, token = mysql_clients
+    headers = {"X-DMS-Request": "1"}
+
+    def create(module, body):
+        from app.crud import IDS
+
+        response = admin.post(f"/api/{module}/", json=body, headers=headers)
+        assert response.status_code == 201, response.text
+        table = module.replace("-", "_")
+        id = response.json()[IDS[table]]
+        tracked[table].append(id)
+        return id
+
+    location = create(
+        "locations",
+        dict(
+            state="Assam",
+            district="Kamrup",
+            city="V3 test " + token,
+            address="Disposable fixture " + token,
+            latitude=26.14,
+            longitude=91.73,
+        ),
+    )
+    disaster = create(
+        "disasters",
+        dict(
+            location_id=location,
+            title="V3 test " + token,
+            disaster_type="FLOOD",
+            severity="HIGH",
+            start_time="2026-10-12T09:00:00",
+        ),
+    )
+    resource = create(
+        "resources",
+        dict(
+            resource_name="V3 water " + token,
+            category="WATER",
+            unit="litres",
+            total_quantity=10,
+            available_quantity=10,
+        ),
+    )
+    create(
+        "shelters",
+        dict(location_id=location, name="V3 shelter " + token, capacity=100, current_occupancy=20),
+    )
+    request_id = create(
+        "resource-requests", dict(disaster_id=disaster, resource_id=resource, quantity=12)
+    )
+    approval = admin.post(
+        f"/api/resource-requests/{request_id}/approve",
+        json=dict(quantity=3, idempotency_key="v3-approval-" + token),
+        headers=headers,
+    )
+    assert approval.status_code == 201, approval.text
+    allocation = approval.json()["allocation_id"]
+    tracked["resource_allocations"].append(allocation)
+    intel = admin.get("/api/resource-intelligence", params={"resource_id": resource}).json()
+    assert (
+        intel["metrics"]["partial"] == 1
+        and DecimalValue(intel["resource_totals"][0]["shortage"]) == 2
+    )
+    row = intel["items"][0]
+    assert (
+        DecimalValue(row["allocated_quantity"]) == 3
+        and DecimalValue(row["delivered_quantity"]) == 0
+    )
+    for module in ["disasters", "emergency-reports", "shelters", "resources"]:
+        response = admin.get(f"/api/exports/{module}.pdf")
+        assert response.status_code == 200, response.text
+        assert PdfReader(BytesIO(response.content)).pages
+        assert admin.get(f"/api/exports/{module}.csv").status_code == 200
+    for section in ["overview", "resource-intelligence"]:
+        assert admin.get(f"/api/reports/{section}/pdf").status_code == 200
+        assert admin.get(f"/api/reports/{section}/csv").status_code == 200
+    generator = app.dependency_overrides[get_db]()
+    session = next(generator)
+    test_engine = session.bind
+    generator.close()
+
+    def signature():
+        with test_engine.connect() as connection:
+            counts = {
+                table: connection.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar_one()
+                for table in [
+                    "disasters",
+                    "resources",
+                    "shelters",
+                    "resource_allocations",
+                    "resource_requests",
+                    "audit_history",
+                    "resource_movements",
+                    "auth_sessions",
+                ]
+            }
+            balances = [
+                tuple(row)
+                for row in connection.execute(
+                    text(
+                        "SELECT resource_id,total_quantity,available_quantity FROM resources ORDER BY resource_id"
+                    )
+                )
+            ]
+            occupancy = [
+                tuple(row)
+                for row in connection.execute(
+                    text("SELECT shelter_id,current_occupancy FROM shelters ORDER BY shelter_id")
+                )
+            ]
+            return counts, balances, occupancy
+
+    before = signature()
+    with patch.object(planning, "engine", test_engine):
+        scenario = dict(
+            name="Assam V3 " + token,
+            disaster_type="FLOOD",
+            region="Assam",
+            population=2000,
+            severity="HIGH",
+            accommodation_required=2000,
+            reserve_percent=20,
+            latitude=26.14,
+            longitude=91.73,
+            disaster_id=disaster,
+            demands=[dict(resource_id=resource, quantity=12, region="Assam", priority=3)],
+        )
+        response = admin.post("/api/simulations/run", json=scenario, headers=headers)
+        assert response.status_code == 201, response.text
+        result = response.json()
+        id = result["simulation_id"]
+        assert (
+            len(result["plans"]) == 3
+            and DecimalValue(result["plans"][0]["resources"][0]["proposed"]) == 7
+        )
+        assert (
+            public.post("/api/simulations/run", json=scenario, headers=headers).status_code == 403
+        )
+        assert admin.get(f"/api/simulations/{id}/export/pdf").status_code == 200
+        assert admin.get(f"/api/simulations/{id}/export/csv").status_code == 200
+        assert admin.delete(f"/api/simulations/{id}", headers=headers).status_code == 200
+        assert admin.get(f"/api/simulations/{id}").status_code == 404
+    assert signature() == before, "Simulation changed actual records, audit events or inventory"

@@ -101,93 +101,48 @@ CREATE TABLE IF NOT EXISTS resource_movements (movement_id BIGINT AUTO_INCREMENT
                                                                                                                                                                                                                                                                                                                                                                                    movement_id)) ENGINE=InnoDB
 """
 # No cascading foreign keys: history must survive deletion of its source or actor.
-
 VIEWS = {
     "dms_shelter_occupancy": """
-        SELECT
-            s.shelter_id,
-            s.name,
-            l.city,
-            s.status,
-            s.capacity,
-            s.current_occupancy,
-            s.capacity - s.current_occupancy AS remaining_capacity,
-            ROUND(
-                100.0 * s.current_occupancy / NULLIF(s.capacity, 0),
-                2
-            ) AS occupancy_percent,
-            COALESCE(r.active_registrations, 0) AS active_registrations
-        FROM shelters s
-        JOIN locations l
-            ON l.location_id = s.location_id
-        LEFT JOIN (
-            SELECT
-                shelter_id,
-                COUNT(*) AS active_registrations
-            FROM shelter_registrations
-            WHERE status = 'ACTIVE'
-            GROUP BY shelter_id
-        ) r
-            ON r.shelter_id = s.shelter_id
-    """,
-
+SELECT s.shelter_id,s.name,l.city,s.status,s.capacity,s.current_occupancy,
+       s.capacity-s.current_occupancy AS remaining_capacity,
+       ROUND(100.0*s.current_occupancy/NULLIF(s.capacity,
+                                         0), 2) AS occupancy_percent, COALESCE(r.active_registrations,
+                                                                        0) AS active_registrations
+FROM shelters s
+JOIN locations l ON l.location_id=s.location_id
+LEFT JOIN
+  (SELECT shelter_id,COUNT(*) AS active_registrations
+   FROM shelter_registrations
+   WHERE status='ACTIVE'
+   GROUP BY shelter_id) r ON r.shelter_id=s.shelter_id
+""",
     "dms_disaster_allocations": """
-        SELECT
-            d.disaster_id,
-            d.title,
-            d.status,
-            l.city,
-            COALESCE(a.allocation_count, 0) AS allocation_count,
-            COALESCE(a.resource_types, 0) AS resource_types,
-            COALESCE(v.active_volunteers, 0) AS active_volunteers
-        FROM disasters d
-        JOIN locations l
-            ON l.location_id = d.location_id
-        LEFT JOIN (
-            SELECT
-                disaster_id,
-                COUNT(*) AS allocation_count,
-                COUNT(DISTINCT resource_id) AS resource_types
-            FROM resource_allocations
-            WHERE status != 'CANCELLED'
-            GROUP BY disaster_id
-        ) a
-            ON a.disaster_id = d.disaster_id
-        LEFT JOIN (
-            SELECT
-                disaster_id,
-                COUNT(DISTINCT volunteer_id) AS active_volunteers
-            FROM volunteer_assignments
-            WHERE status IN ('ASSIGNED', 'ACTIVE')
-            GROUP BY disaster_id
-        ) v
-            ON v.disaster_id = d.disaster_id
-    """,
-
+SELECT d.disaster_id,d.title,d.status,l.city,
+       COALESCE(a.allocation_count, 0) AS allocation_count, COALESCE(a.resource_types,
+                                                              0) AS resource_types,
+       COALESCE(v.active_volunteers, 0) AS active_volunteers
+FROM disasters d
+JOIN locations l ON l.location_id=d.location_id
+LEFT JOIN
+  (SELECT disaster_id,COUNT(*) AS allocation_count,COUNT(DISTINCT resource_id) AS resource_types
+   FROM resource_allocations
+   WHERE status!='CANCELLED'
+   GROUP BY disaster_id) a ON a.disaster_id=d.disaster_id
+LEFT JOIN
+  (SELECT disaster_id,COUNT(DISTINCT volunteer_id) AS active_volunteers
+   FROM volunteer_assignments
+   WHERE status IN ('ASSIGNED','ACTIVE')
+   GROUP BY disaster_id) v ON v.disaster_id=d.disaster_id
+""",
     "dms_monthly_reports": """
-        SELECT
-            DATE_FORMAT(er.reported_at, '%%Y-%%m') AS report_month,
-            l.location_id,
-            l.city,
-            l.district,
-            l.state,
-            COUNT(*) AS total_reports,
-            SUM(er.review_status = 'PENDING_REVIEW') AS pending_reports,
-            SUM(er.review_status = 'CONFIRMED') AS confirmed_reports,
-            SUM(er.review_status = 'REJECTED') AS rejected_reports,
-            SUM(er.review_status = 'LEGACY') AS legacy_reports
-        FROM emergency_reports er
-        JOIN locations l
-            ON l.location_id = er.location_id
-        GROUP BY
-            DATE_FORMAT(er.reported_at, '%%Y-%%m'),
-            l.location_id,
-            l.city,
-            l.district,
-            l.state
-    """
+SELECT DATE_FORMAT(er.reported_at, '%Y-%m') AS report_month, l.location_id,l.city,l.district,l.state,COUNT(*) AS total_reports,
+       SUM(er.review_status='PENDING_REVIEW') AS pending_reports, SUM(er.review_status='CONFIRMED') AS confirmed_reports,
+       SUM(er.review_status='REJECTED') AS rejected_reports, SUM(er.review_status='LEGACY') AS legacy_reports
+FROM emergency_reports er
+JOIN locations l ON l.location_id=er.location_id
+GROUP BY DATE_FORMAT(er.reported_at, '%Y-%m'),l.location_id,l.city,l.district,l.state
+""",
 }
-
 
 
 def snapshot(alias, fields):

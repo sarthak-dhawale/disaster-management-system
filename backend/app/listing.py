@@ -18,6 +18,7 @@ def list_options(
     limit: int = Query(25, ge=1, le=200),
     offset: int = Query(0, ge=0),
     record_id: int | None = Query(None, gt=0),
+    request_id: int | None = Query(None, gt=0),
     sort: str = Query("desc", pattern="^(asc|desc|priority)$"),
 ):
     return locals()
@@ -54,7 +55,7 @@ FILTER_FIELDS = {
     "locations": {"city"},
     "users": {"role", "status"},
     "emergency_reports": {"status", "review_status", "severity", "report_type", "city"},
-    "resource_allocations": {"status"},
+    "resource_allocations": {"status", "request_id"},
     "volunteer_assignments": {"status"},
     "shelter_registrations": {"status"},
 }
@@ -90,7 +91,7 @@ def selection(sql, key, options, owner=None):
         )
         params["q"] = "%" + options["q"] + "%"
     for field in FILTER_FIELDS[key]:
-        if options[field]:
+        if options.get(field):
             where.append(f"{field} LIKE :{field}" if field == "city" else f"{field}=:{field}")
             params[field] = "%" + options[field] + "%" if field == "city" else options[field]
     if options["low_stock"] and key == "resources":

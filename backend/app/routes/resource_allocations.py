@@ -12,7 +12,7 @@ router = APIRouter(
     dependencies=[Depends(require_admin)],
 )
 LIST_SQL = """
-SELECT ra.allocation_id, ra.resource_id, r.resource_name, r.unit, ra.disaster_id, d.title AS disaster_title,
+SELECT ra.allocation_id, ra.request_id, ra.resource_id, r.resource_name, r.unit, ra.disaster_id, d.title AS disaster_title,
        ra.shelter_id, s.name AS shelter_name, ra.allocated_by, u.full_name AS allocated_by_name,
        ra.quantity, ra.allocation_date, ra.status
 FROM resource_allocations ra
@@ -34,7 +34,7 @@ def get_one(id: int = Path(gt=0), db=Depends(get_db)):
     row = (
         db.execute(
             text("""
-SELECT ra.allocation_id, ra.resource_id, r.resource_name, r.unit, ra.disaster_id, d.title AS disaster_title,
+SELECT ra.allocation_id, ra.request_id, ra.resource_id, r.resource_name, r.unit, ra.disaster_id, d.title AS disaster_title,
        ra.shelter_id, s.name AS shelter_name, ra.allocated_by, u.full_name AS allocated_by_name,
        ra.quantity, ra.allocation_date, ra.status
 FROM resource_allocations ra

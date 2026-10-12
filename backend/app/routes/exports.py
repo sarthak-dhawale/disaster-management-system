@@ -9,7 +9,7 @@ from app.database import get_db
 from app.security import current_user, ADMIN_ROLES
 from app.listing import list_options, selection, IDS
 from app.geo import priority_sql
-from app.routes import disasters, emergency_reports, resources, resource_allocations
+from app.routes import disasters, emergency_reports, resources, resource_allocations, shelters
 
 router = APIRouter(prefix="/api/exports", tags=["CSV reports"])
 MODULES = {
@@ -17,8 +17,10 @@ MODULES = {
     "emergency-reports": emergency_reports,
     "resources": resources,
     "resource-allocations": resource_allocations,
+    "shelters": shelters,
 }
 COLUMNS = {
+    "shelters": ["shelter_id", "name", "city", "state", "status", "capacity", "current_occupancy", "contact_phone"],
     "disasters": [
         "disaster_id",
         "title",
