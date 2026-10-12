@@ -1,309 +1,77 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import text
-
 from app.database import get_db
+from app.models import UserCreate, UserUpdate
+from app.security import require_owner_admin, PUBLIC_FIELDS, hash_password
+from app.listing import list_options, list_records
+from app.crud import record, insert, update, simple_delete
 
-router = APIRouter(prefix="/api/users", tags=["Users"])
-
-
-class UserCreate(BaseModel):
-    full_name: str
-    email: str
-    password_hash: str
-    phone: Optional[str] = None
-    role: str = "PUBLIC_USER"
-    status: str = "ACTIVE"
-
-
-class UserUpdate(BaseModel):
-    full_name: str
-    email: str
-    password_hash: str
-    phone: Optional[str] = None
-    role: str
-    status: str
+router = APIRouter(prefix="/api/users", tags=["Users"], dependencies=[Depends(require_owner_admin)])
+LIST_SQL = "SELECT " + PUBLIC_FIELDS + " FROM users ORDER BY user_id DESC"
 
 
 @router.get("/")
-def get_all_users(db: Session = Depends(get_db)):
-    query = text("""
-        SELECT
-            user_id,
-            full_name,
-            email,
-            phone,
-            role,
-            status,
-            created_at
-        FROM users
-        ORDER BY user_id DESC
-    """)
-
-    result = db.execute(query).mappings().all()
-
-    return {
-        "count": len(result),
-        "users": [dict(row) for row in result]
-    }
+def get_all(db=Depends(get_db), options=Depends(list_options)):
+    return list_records(db, LIST_SQL, "users", options)
 
 
-@router.get("/{user_id}")
-def get_user(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    query = text("""
-        SELECT
-            user_id,
-            full_name,
-            email,
-            phone,
-            role,
-            status,
-            created_at
-        FROM users
-        WHERE user_id = :user_id
-    """)
-
-    result = db.execute(
-        query,
-        {"user_id": user_id}
-    ).mappings().first()
-
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-
-    return dict(result)
+@router.get("/{id}")
+def get_one(id: int = Path(gt=0), db=Depends(get_db)):
+    user = record(db, "users", id)
+    user.pop("password_hash")
+    return user
 
 
-@router.post("/")
-def create_user(
-    user: UserCreate,
-    db: Session = Depends(get_db)
-):
-    valid_roles = [
-        "ADMIN",
-        "DISASTER_MANAGER",
-        "VOLUNTEER",
-        "PUBLIC_USER"
-    ]
-
-    valid_statuses = [
-        "ACTIVE",
-        "INACTIVE",
-        "SUSPENDED"
-    ]
-
-    if user.role not in valid_roles:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid user role"
-        )
-
-    if user.status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid user status"
-        )
-
-    existing_user = db.execute(
-        text("""
-            SELECT user_id
-            FROM users
-            WHERE email = :email
-        """),
-        {"email": user.email}
-    ).first()
-
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already exists"
-        )
-
-    query = text("""
-        INSERT INTO users (
-            full_name,
-            email,
-            password_hash,
-            phone,
-            role,
-            status
-        )
-        VALUES (
-            :full_name,
-            :email,
-            :password_hash,
-            :phone,
-            :role,
-            :status
-        )
-    """)
-
-    result = db.execute(
-        query,
-        {
-            "full_name": user.full_name,
-            "email": user.email,
-            "password_hash": user.password_hash,
-            "phone": user.phone,
-            "role": user.role,
-            "status": user.status
-        }
-    )
-
+@router.post("/", status_code=201)
+def create(body: UserCreate, db=Depends(get_db)):
+    data = body.model_dump()
+    data["password_hash"] = hash_password(data.pop("password"))
+    id = insert(db, "users", data)
     db.commit()
-
-    return {
-        "message": "User created successfully",
-        "user_id": result.lastrowid
-    }
+    return {"message": "User created", "user_id": id}
 
 
-@router.put("/{user_id}")
-def update_user(
-    user_id: int,
-    user: UserUpdate,
-    db: Session = Depends(get_db)
+@router.put("/{id}")
+def edit(
+    body: UserUpdate, id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_owner_admin)
 ):
-    user_check = db.execute(
-        text("""
-            SELECT user_id
-            FROM users
-            WHERE user_id = :user_id
-        """),
-        {"user_id": user_id}
-    ).first()
-
-    if not user_check:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
+    # Serialize account changes to protect the last active administrator.
+    admins = db.execute(
+        text(
+            "SELECT user_id FROM users WHERE role='ADMIN' AND status='ACTIVE' ORDER BY user_id FOR UPDATE"
         )
-
-    valid_roles = [
-        "ADMIN",
-        "DISASTER_MANAGER",
-        "VOLUNTEER",
-        "PUBLIC_USER"
-    ]
-
-    valid_statuses = [
-        "ACTIVE",
-        "INACTIVE",
-        "SUSPENDED"
-    ]
-
-    if user.role not in valid_roles:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid user role"
-        )
-
-    if user.status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid user status"
-        )
-
-    duplicate_email = db.execute(
-        text("""
-            SELECT user_id
-            FROM users
-            WHERE email = :email
-            AND user_id != :user_id
-        """),
-        {
-            "email": user.email,
-            "user_id": user_id
-        }
-    ).first()
-
-    if duplicate_email:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already exists"
-        )
-
-    query = text("""
-        UPDATE users
-        SET
-            full_name = :full_name,
-            email = :email,
-            password_hash = :password_hash,
-            phone = :phone,
-            role = :role,
-            status = :status
-        WHERE user_id = :user_id
-    """)
-
-    db.execute(
-        query,
-        {
-            "user_id": user_id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "password_hash": user.password_hash,
-            "phone": user.phone,
-            "role": user.role,
-            "status": user.status
-        }
-    )
-
+    ).all()
+    old = record(db, "users", id, True)
+    if id == user["user_id"] and (body.status != "ACTIVE" or body.role != "ADMIN"):
+        raise HTTPException(409, "You cannot disable or demote your own administrator account")
+    if (
+        old["role"] == "ADMIN"
+        and old["status"] == "ACTIVE"
+        and len(admins) <= 1
+        and (body.role != "ADMIN" or body.status != "ACTIVE")
+    ):
+        raise HTTPException(409, "Keep at least one active administrator")
+    data = body.model_dump()
+    password = data.pop("password")
+    if password:
+        data["password_hash"] = hash_password(password)
+    update(db, "users", id, data)
+    if password or old["role"] != body.role or old["status"] != body.status:
+        db.execute(text("DELETE FROM auth_sessions WHERE user_id=:id"), {"id": id})
     db.commit()
-
-    return {
-        "message": "User updated successfully",
-        "user_id": user_id
-    }
+    return {"message": "User updated", "user_id": id}
 
 
-@router.delete("/{user_id}")
-def delete_user(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    user_check = db.execute(
-        text("""
-            SELECT user_id
-            FROM users
-            WHERE user_id = :user_id
-        """),
-        {"user_id": user_id}
-    ).first()
-
-    if not user_check:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
+@router.delete("/{id}")
+def delete(id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_owner_admin)):
+    admins = db.execute(
+        text(
+            "SELECT user_id FROM users WHERE role='ADMIN' AND status='ACTIVE' ORDER BY user_id FOR UPDATE"
         )
-
-    try:
-        db.execute(
-            text("""
-                DELETE FROM users
-                WHERE user_id = :user_id
-            """),
-            {"user_id": user_id}
-        )
-
-        db.commit()
-
-    except Exception:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=400,
-            detail="User cannot be deleted because the user is being used by another record"
-        )
-
-    return {
-        "message": "User deleted successfully",
-        "user_id": user_id
-    }
+    ).all()
+    old = record(db, "users", id, True)
+    if id == user["user_id"]:
+        raise HTTPException(409, "You cannot delete your own account")
+    if old["role"] == "ADMIN" and old["status"] == "ACTIVE" and len(admins) <= 1:
+        raise HTTPException(409, "Keep at least one active administrator")
+    return simple_delete(db, "users", id)

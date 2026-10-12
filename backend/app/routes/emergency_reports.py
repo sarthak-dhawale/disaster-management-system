@@ -1,351 +1,224 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from sqlalchemy.orm import Session
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import text
-
 from app.database import get_db
+from app.models import EmergencyReportCreate, Review, ReportProgress
+from app.security import current_user, require_admin, ADMIN_ROLES
+from app.listing import list_options, list_records
+from app.crud import record, insert, update, remove
 
-router = APIRouter(
-    prefix="/api/emergency-reports",
-    tags=["Emergency Reports"]
-)
-
-
-class EmergencyReportCreate(BaseModel):
-    disaster_id: Optional[int] = None
-    location_id: int
-    reported_by: Optional[int] = None
-    report_type: str
-    description: str
-    severity: str
-    status: str = "PENDING"
+router = APIRouter(prefix="/api/emergency-reports", tags=["Emergency reports"])
+LIST_SQL = """
+SELECT er.*,l.city,l.district,l.state,l.address,u.full_name AS reported_by_name
+FROM emergency_reports er
+LEFT JOIN locations l ON l.location_id=er.location_id
+LEFT JOIN users u ON u.user_id=er.reported_by
+ORDER BY er.report_id DESC
+"""
 
 
-class EmergencyReportUpdate(BaseModel):
-    disaster_id: Optional[int] = None
-    location_id: int
-    reported_by: Optional[int] = None
-    report_type: str
-    description: str
-    severity: str
-    status: str
-    resolved_at: Optional[str] = None
+PUBLIC_REPORT_FIELDS = {
+    "report_id",
+    "disaster_id",
+    "location_id",
+    "reported_by",
+    "disaster_type",
+    "report_type",
+    "description",
+    "severity",
+    "status",
+    "review_status",
+    "review_reason",
+    "reported_at",
+    "occurred_at",
+    "reviewed_at",
+    "resolved_at",
+    "reported_location_text",
+    "reported_latitude",
+    "reported_longitude",
+    "coordinate_source",
+    "city",
+    "district",
+    "state",
+    "address",
+}
 
 
-VALID_REPORT_TYPES = [
-    "MEDICAL",
-    "TRAPPED_PERSON",
-    "MISSING_PERSON",
-    "INFRASTRUCTURE_DAMAGE",
-    "FIRE",
-    "FLOODING",
-    "OTHER"
-]
-
-VALID_SEVERITIES = [
-    "LOW",
-    "MEDIUM",
-    "HIGH",
-    "CRITICAL"
-]
-
-VALID_STATUSES = [
-    "PENDING",
-    "IN_PROGRESS",
-    "RESOLVED",
-    "REJECTED"
-]
+def public_report(row):
+    # review_reason is explicitly a published decision reason, not an internal note.
+    return {key: value for key, value in row.items() if key in PUBLIC_REPORT_FIELDS}
 
 
-def validate_report(report):
-    if report.report_type not in VALID_REPORT_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid report type"
+def owned_record(db, id, user, lock=False):
+    owner = "" if user["role"] in ADMIN_ROLES else " AND reported_by=:owner"
+    r = (
+        db.execute(
+            text(
+                "SELECT * FROM emergency_reports WHERE report_id=:id"
+                + owner
+                + (" FOR UPDATE" if lock else "")
+            ),
+            {"id": id, "owner": user["user_id"]},
         )
-
-    if report.severity not in VALID_SEVERITIES:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid severity"
-        )
-
-    if report.status not in VALID_STATUSES:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid report status"
-        )
-
-
-def check_foreign_keys(report, db):
-    location_check = db.execute(
-        text("""
-            SELECT location_id
-            FROM locations
-            WHERE location_id = :location_id
-        """),
-        {"location_id": report.location_id}
-    ).first()
-
-    if not location_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Location not found"
-        )
-
-    if report.disaster_id is not None:
-        disaster_check = db.execute(
-            text("""
-                SELECT disaster_id
-                FROM disasters
-                WHERE disaster_id = :disaster_id
-            """),
-            {"disaster_id": report.disaster_id}
-        ).first()
-
-        if not disaster_check:
-            raise HTTPException(
-                status_code=404,
-                detail="Disaster not found"
-            )
-
-    if report.reported_by is not None:
-        user_check = db.execute(
-            text("""
-                SELECT user_id
-                FROM users
-                WHERE user_id = :user_id
-            """),
-            {"user_id": report.reported_by}
-        ).first()
-
-        if not user_check:
-            raise HTTPException(
-                status_code=404,
-                detail="Reporting user not found"
-            )
+        .mappings()
+        .first()
+    )
+    if not r:
+        raise HTTPException(404, "Report not found")
+    return dict(r)
 
 
 @router.get("/")
-def get_all_reports(db: Session = Depends(get_db)):
-    query = text("""
-        SELECT
-            er.report_id,
-            er.disaster_id,
-            er.location_id,
-            l.city,
-            l.district,
-            l.state,
-            er.reported_by,
-            u.full_name AS reported_by_name,
-            er.report_type,
-            er.description,
-            er.severity,
-            er.status,
-            er.reported_at,
-            er.resolved_at
-        FROM emergency_reports er
-        JOIN locations l
-            ON er.location_id = l.location_id
-        LEFT JOIN users u
-            ON er.reported_by = u.user_id
-        ORDER BY er.report_id DESC
-    """)
+def get_all(db=Depends(get_db), options=Depends(list_options), user=Depends(current_user)):
+    opts = options.copy()
+    if opts["status"] in {"PENDING_REVIEW", "CONFIRMED", "REJECTED", "LEGACY"}:
+        opts["review_status"] = opts.pop("status")
+        opts["status"] = ""
+    result = list_records(
+        db,
+        LIST_SQL,
+        "emergency_reports",
+        opts,
+        None if user["role"] in ADMIN_ROLES else user["user_id"],
+    )
+    if user["role"] not in ADMIN_ROLES:
+        result["emergency_reports"] = [public_report(r) for r in result["emergency_reports"]]
+    return result
 
-    result = db.execute(query).mappings().all()
 
+@router.get("/{id}")
+def get_one(id: int = Path(gt=0), db=Depends(get_db), user=Depends(current_user)):
+    owned_record(db, id, user)
+    result = dict(
+        db.execute(text(LIST_SQL.rsplit("ORDER BY", 1)[0] + " WHERE er.report_id=:id"), {"id": id})
+        .mappings()
+        .one()
+    )
+    return result if user["role"] in ADMIN_ROLES else public_report(result)
+
+
+@router.post("/", status_code=201)
+def create(body: EmergencyReportCreate, db=Depends(get_db), user=Depends(current_user)):
+    if body.location_id:
+        record(db, "locations", body.location_id)
+    data = body.model_dump()
+    data.update(reported_by=user["user_id"], status="PENDING", review_status="PENDING_REVIEW")
+    id = insert(db, "emergency_reports", data)
+    db.commit()
     return {
-        "count": len(result),
-        "emergency_reports": [dict(row) for row in result]
+        "message": "Report submitted for administrator review",
+        "report_id": id,
+        "status": "PENDING_REVIEW",
     }
 
 
-@router.get("/{report_id}")
-def get_report(
-    report_id: int,
-    db: Session = Depends(get_db)
+@router.put("/{id}")
+def edit(
+    body: EmergencyReportCreate,
+    id: int = Path(gt=0),
+    db=Depends(get_db),
+    user=Depends(require_admin),
 ):
-    query = text("""
-        SELECT
-            er.report_id,
-            er.disaster_id,
-            er.location_id,
-            l.city,
-            l.district,
-            l.state,
-            er.reported_by,
-            u.full_name AS reported_by_name,
-            er.report_type,
-            er.description,
-            er.severity,
-            er.status,
-            er.reported_at,
-            er.resolved_at
-        FROM emergency_reports er
-        JOIN locations l
-            ON er.location_id = l.location_id
-        LEFT JOIN users u
-            ON er.reported_by = u.user_id
-        WHERE er.report_id = :report_id
-    """)
-
-    result = db.execute(
-        query,
-        {"report_id": report_id}
-    ).mappings().first()
-
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="Emergency report not found"
-        )
-
-    return dict(result)
+    old = owned_record(db, id, user, True)
+    if old["review_status"] != "PENDING_REVIEW":
+        raise HTTPException(409, "Reviewed reports are immutable")
+    if body.location_id:
+        record(db, "locations", body.location_id)
+    update(db, "emergency_reports", id, body.model_dump())
+    db.commit()
+    return {"message": "Pending report updated", "report_id": id}
 
 
-@router.post("/")
-def create_report(
-    report: EmergencyReportCreate,
-    db: Session = Depends(get_db)
-):
-    validate_report(report)
-    check_foreign_keys(report, db)
-
-    query = text("""
-        INSERT INTO emergency_reports (
-            disaster_id,
-            location_id,
-            reported_by,
-            report_type,
-            description,
-            severity,
-            status
-        )
-        VALUES (
-            :disaster_id,
-            :location_id,
-            :reported_by,
-            :report_type,
-            :description,
-            :severity,
-            :status
-        )
-    """)
-
-    result = db.execute(
-        query,
+@router.post("/{id}/review")
+def review(body: Review, id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_admin)):
+    old = owned_record(db, id, user, True)
+    if old["review_status"] != "PENDING_REVIEW":
+        if old["review_status"] == body.decision:
+            return {
+                "message": "Report already reviewed",
+                "report_id": id,
+                "status": old["review_status"],
+                "disaster_id": old["disaster_id"],
+            }
+        raise HTTPException(409, "Report has already been reviewed")
+    disaster_id = None
+    if body.decision == "CONFIRMED":
+        location_id = body.location_id or old["location_id"]
+        if not location_id:
+            raise HTTPException(422, "Select an official saved location before confirmation")
+        record(db, "locations", location_id)
+        if body.disaster_id:
+            linked = record(db, "disasters", body.disaster_id, True)
+            if linked["location_id"] != location_id:
+                raise HTTPException(422, "Linked disaster must use the report location")
+            disaster_id = body.disaster_id
+        else:
+            disaster_id = insert(
+                db,
+                "disasters",
+                {
+                    "location_id": location_id,
+                    "reported_by": old["reported_by"],
+                    "disaster_type": old["disaster_type"],
+                    "title": body.title or f"Emergency report #{id}",
+                    "description": old["description"],
+                    "severity": old["severity"],
+                    "status": "ACTIVE",
+                    "start_time": old["occurred_at"] or old["reported_at"],
+                },
+            )
+    elif body.disaster_id:
+        raise HTTPException(422, "Rejected reports cannot link an official disaster")
+    update(
+        db,
+        "emergency_reports",
+        id,
         {
-            "disaster_id": report.disaster_id,
-            "location_id": report.location_id,
-            "reported_by": report.reported_by,
-            "report_type": report.report_type,
-            "description": report.description,
-            "severity": report.severity,
-            "status": report.status
-        }
+            **({"location_id": location_id} if body.decision == "CONFIRMED" else {}),
+            "disaster_id": disaster_id,
+            "review_status": body.decision,
+            "status": "IN_PROGRESS" if body.decision == "CONFIRMED" else "REJECTED",
+            "reviewed_by": user["user_id"],
+            "reviewed_at": datetime.now(),
+            "review_reason": body.reason,
+        },
     )
-
     db.commit()
-
     return {
-        "message": "Emergency report created successfully",
-        "report_id": result.lastrowid
+        "message": "Report reviewed",
+        "report_id": id,
+        "status": body.decision,
+        "disaster_id": disaster_id,
     }
 
 
-@router.put("/{report_id}")
-def update_report(
-    report_id: int,
-    report: EmergencyReportUpdate,
-    db: Session = Depends(get_db)
+@router.post("/{id}/progress")
+def progress(
+    body: ReportProgress, id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_admin)
 ):
-    report_check = db.execute(
-        text("""
-            SELECT report_id
-            FROM emergency_reports
-            WHERE report_id = :report_id
-        """),
-        {"report_id": report_id}
-    ).first()
-
-    if not report_check:
+    old = owned_record(db, id, user, True)
+    if old["review_status"] not in {"CONFIRMED", "LEGACY"} or old["status"] == "REJECTED":
         raise HTTPException(
-            status_code=404,
-            detail="Emergency report not found"
+            409, "Only confirmed or existing legacy reports can change response progress"
         )
-
-    validate_report(report)
-    check_foreign_keys(report, db)
-
-    query = text("""
-        UPDATE emergency_reports
-        SET
-            disaster_id = :disaster_id,
-            location_id = :location_id,
-            reported_by = :reported_by,
-            report_type = :report_type,
-            description = :description,
-            severity = :severity,
-            status = :status,
-            resolved_at = :resolved_at
-        WHERE report_id = :report_id
-    """)
-
-    db.execute(
-        query,
+    update(
+        db,
+        "emergency_reports",
+        id,
         {
-            "report_id": report_id,
-            "disaster_id": report.disaster_id,
-            "location_id": report.location_id,
-            "reported_by": report.reported_by,
-            "report_type": report.report_type,
-            "description": report.description,
-            "severity": report.severity,
-            "status": report.status,
-            "resolved_at": report.resolved_at
-        }
+            "status": body.status,
+            "resolved_at": datetime.now() if body.status == "RESOLVED" else None,
+        },
     )
-
     db.commit()
-
-    return {
-        "message": "Emergency report updated successfully",
-        "report_id": report_id
-    }
+    return {"message": "Response progress updated", "report_id": id, "status": body.status}
 
 
-@router.delete("/{report_id}")
-def delete_report(
-    report_id: int,
-    db: Session = Depends(get_db)
-):
-    report_check = db.execute(
-        text("""
-            SELECT report_id
-            FROM emergency_reports
-            WHERE report_id = :report_id
-        """),
-        {"report_id": report_id}
-    ).first()
-
-    if not report_check:
-        raise HTTPException(
-            status_code=404,
-            detail="Emergency report not found"
-        )
-
-    db.execute(
-        text("""
-            DELETE FROM emergency_reports
-            WHERE report_id = :report_id
-        """),
-        {"report_id": report_id}
-    )
-
+@router.delete("/{id}")
+def delete(id: int = Path(gt=0), db=Depends(get_db), user=Depends(require_admin)):
+    old = owned_record(db, id, user, True)
+    if old["review_status"] != "PENDING_REVIEW":
+        raise HTTPException(409, "Retain reviewed reports as an audit trail")
+    remove(db, "emergency_reports", id)
     db.commit()
-
-    return {
-        "message": "Emergency report deleted successfully",
-        "report_id": report_id
-    }
+    return {"message": "Pending report deleted", "report_id": id}
