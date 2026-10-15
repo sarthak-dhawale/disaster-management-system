@@ -1,140 +1,298 @@
-# Disaster Management System V4
+# Disaster Management System
 
-A local college DBMS application for suspected-emergency reporting, administrator review and coordinated operational records. React communicates with FastAPI and MySQL 8.4. V4 adds comprehensive incident-map retrieval and a read-only Disaster Replay Studio.
+A database-driven platform for disaster reporting, incident monitoring, and coordinated emergency response.
+
+The Disaster Management System is a full-stack college DBMS project that connects public emergency reporting with disaster-manager review and operational resource coordination. Built with **React, FastAPI, and MySQL 8.4**, it brings disaster records, shelters, volunteers, and resource allocation into one application.
+
+Version 4 enhances the application with an interactive India disaster map, a chronological Disaster Replay Studio, Resource Intelligence, and a What-if Response Simulator.
 
 ## Features
 
-- Public reports with pending, confirmed and rejected review states; confirmation creates or links an official disaster.
-- Disaster, location, shelter, volunteer, inventory, allocation, assignment and registration management.
-- Overview with database metrics, India map, clustering, filters, marker selection and missing-location records.
-- Advanced Tools: Disaster Replay Studio, Resource Intelligence and Response Simulator.
-- Chronological audit replay, timeline PDFs, actual-data PDF/CSV exports and resource movement history.
-- Four roles with backend authorization; Argon2 password hashes and expiring cookie sessions.
-- Optional, explicitly fictional V4 sample batch that preserves existing records.
+### Interactive Disaster Overview
+- View disaster locations on an interactive map of India.
+- Explore disaster markers, clustering, filters, and incident details.
+- Access disaster records even when valid map coordinates are unavailable.
+- Review overview information derived from the application's database.
 
-## Stack and requirements
+### Emergency Reporting
+- Allow public users to submit suspected emergencies for review.
+- Support pending, confirmed, and rejected report statuses.
+- Enable authorized disaster managers to review reports and handle confirmed incidents.
 
-React 19, Vite 7, Leaflet 1.9, Python/FastAPI, SQLAlchemy 2, PyMySQL, MySQL 8.4, ReportLab and Pillow. Windows Python 3.10 on the primary laptop or Python 3.12 on the secondary laptop. Node 20.19+ or 22.12+ is needed for source builds, but the included `frontend/dist` can run through Python without Node. Docker Desktop is required only for the primary laptop's Docker-hosted MySQL setup.
+### Disaster Replay Studio
+- Explore available incident history through a chronological timeline.
+- Navigate recorded events and review their details.
+- Generate timeline reports where supported.
+- Represent only available historical evidence; older incidents may have incomplete timelines.
 
-```text
-backend/app/      API, validation, permissions, operational logic and replay
-backend/tests/    Isolated tests and explicitly opt-in MySQL integration tests
-database/         Schema, guarded migration guidance, optional V4 seed and verification
-frontend/src/     React interface, maps and shared components
-frontend/dist/    Prebuilt frontend
-scripts/         Local frontend server
-imp_instr/       Setup, troubleshooting and implementation handover
-imp_docx/        Academic presentation, proposal, report and case study
-```
+### Resource Intelligence
+- Examine resource availability, demand, shortages, and allocations.
+- Review resource movement history where recorded.
+- Support resource planning using existing inventory data.
 
-## Environment
+### What-if Response Simulator
+- Explore hypothetical disaster-response scenarios.
+- Compare outcomes using the implemented simulation tools.
+- Keep simulation results separate from live operational records.
 
-Preserve existing `.env` files. Only copy examples when private configuration does not already exist:
+### Reporting and Exports
+- Generate PDF reports where supported.
+- Export supported data to CSV.
+- Review incident information and available operational records.
+
+### Authentication and Access Control
+The application supports four roles:
+
+| Role | Primary responsibility |
+|---|---|
+| `ADMIN` | Administrative operations and account management |
+| `DISASTER_MANAGER` | Incident review and disaster-response operations |
+| `VOLUNTEER` | Volunteer-specific operations and permitted reporting workflows |
+| `PUBLIC_USER` | Submit suspected emergencies and track permitted personal reports |
+
+Backend authorization determines which operations each role can perform.
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Frontend | React 19, JavaScript, Vite 7 |
+| Maps | Leaflet 1.9 |
+| Backend | Python, FastAPI |
+| Database | MySQL 8.4 |
+| Database access | SQLAlchemy 2, PyMySQL |
+| PDF generation | ReportLab, Pillow |
+| Development tools | Git, Node.js, Docker Desktop |
+
+## Prerequisites
+
+Install the following before running the application:
+
+- Python 3.10 for the primary development setup, or another version supported by the backend dependencies.
+- Node.js compatible with the project's Vite version.
+- MySQL 8.4.
+- Docker Desktop if using the existing Docker-based database setup, or an existing local MySQL server.
+- Git.
+
+The primary development setup uses Python 3.10 and Docker-hosted MySQL. Python 3.12 may be used on another machine only if the installed dependencies are compatible.
+
+## Getting Started
+
+### 1. Configure the Environment
+
+Open PowerShell in the repository root.
+
+Create environment files from the examples **only if the corresponding private files do not already exist**:
 
 ```powershell
-if (!(Test-Path backend\.env)) { Copy-Item backend\.env.example backend\.env }
-# Docker laptop only:
-if (!(Test-Path .env)) { Copy-Item .env.example .env }
+if (!(Test-Path backend\.env)) {
+    Copy-Item backend\.env.example backend\.env
+}
+
+if (!(Test-Path .env)) {
+    Copy-Item .env.example .env
+}
 ```
 
-Edit `backend/.env`: `DB_HOST=127.0.0.1`, `DB_PORT=3306`, `DB_NAME=disaster_management`, and the existing `DB_USER`/private `DB_PASSWORD`. Optional `DATABASE_URL` overrides these fields. `DB_TIME_ZONE` defaults to `+05:30`. Keep `CORS_ORIGINS=http://127.0.0.1:5500,http://localhost:5500`, `COOKIE_SECURE=false` for local HTTP, and a finite `SESSION_HOURS`. Use secure cookies behind HTTPS for wider deployment. `VITE_API_URL` is a public build-time URL, defaulting to `http://127.0.0.1:8001`. It must never contain credentials.
+Configure the backend database connection in `backend/.env`, using the variable names supported by the project's configuration loader.
 
-## Database setup and backup
+Typical settings may look like:
 
-Open PowerShell at the project root. The primary laptop uses the existing container and volume:
+```dotenv
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=disaster_management
+DB_USER=your_database_user
+DB_PASSWORD=your_private_password
+```
+
+Check the existing configuration loader before changing or adding variables. The root `.env` may be used by Docker Compose, while `backend/.env` contains backend configuration.
+
+**Never commit passwords, session secrets, or private `.env` files.**
+
+### 2. Start MySQL
+
+On the primary development machine, start the existing Docker Compose services from the repository root:
 
 ```powershell
-Set-Location E:\CS\sarthak-disaster-management-system
 docker compose up -d
 docker ps
-docker logs disaster-mysql
 ```
 
-Keep container `disaster-mysql` and volume `disaster_mysql_data`. Removing the persistent volume can permanently delete records. On the secondary laptop, start its existing local MySQL 8.4 service instead; Docker commands are unnecessary. Both setups expose MySQL to the directly running API at `127.0.0.1:3306`. An API inside Compose would use service hostname `mysql`.
+Confirm that the existing MySQL container is running and that the database is reachable.
 
-Before any migration or seeding, stop backend writers and back up the configured database. Exact Docker/local commands are in [V4 sample-data instructions](database/V4_SAMPLE_DATA.md). For a local MySQL client:
+On a machine using local MySQL, start its existing MySQL service instead.
 
-```powershell
-mysqldump -h 127.0.0.1 -P 3306 -u disaster_user -p --single-transaction --routines --triggers --no-tablespaces disaster_management --result-file=dms-before-v4.sql
-```
+> **Database safety:** Preserve the existing `disaster-mysql` container, persistent volume, and populated `disaster_management` database. Do not delete the volume or execute destructive reset scripts against existing records.
 
-Use the actual configured database/account and verify the dump succeeded. Credentials are entered at the prompt. Never use legacy reset scripts on a populated database.
+### 3. Create the Python Environment
 
-## Python environment and explicit migration
+From the repository root:
 
 ```powershell
-# Create only if absent; secondary laptop uses py -3.12.
 py -3.10 -m venv backend\.venv
+```
+
+Install the backend dependencies:
+
+```powershell
 .\backend\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-Set-Location backend
+```
+
+If `backend/.venv` already exists and is compatible, reuse it instead of recreating it.
+
+### 4. Back Up and Migrate the Database
+
+Before applying migrations or sample data:
+
+1. Stop backend processes that could write to the database.
+2. Create a database backup using the appropriate Docker or local MySQL procedure.
+3. Verify that the backup completed successfully.
+4. Review `database/V4_SAMPLE_DATA.md` for the detailed migration and safety instructions.
+
+From the `backend` directory, run the documented migration:
+
+```powershell
+cd backend
 .\.venv\Scripts\python.exe -m app.setup_db migrate
 ```
 
-V4 retains 14 tables and refreshes outdated owned audit triggers for future snapshots. DDL auto-commits; keep writers stopped and rerun if interrupted. For a genuinely empty database only, `python -m app.setup_db init --fresh` initializes and migrates it, refusing an existing schema. Never run initialization to repair a populated database.
+This workflow is intended for an existing supported schema. Use the documented fresh-initialization procedure only for a genuinely empty database.
 
-Optional fictional data, still in `backend`:
+**Never use destructive initialization scripts to repair or reset a populated database.**
 
-```powershell
-.\.venv\Scripts\python.exe ..\database\seed_v4.py --check
-.\.venv\Scripts\python.exe ..\database\seed_v4.py --apply
-```
+## Optional: Add V4 Demonstration Data
 
-The check does not connect to MySQL. Apply prompts for a new demo password and inserts an atomic batch: 12 disasters, 16 shelters, 20 resources, 12 volunteers, 10 public users, 2 role accounts and related records. Reruns preserve an intact batch; conflicts cause refusal. These are fictional scenarios, not verified emergencies. No sample account exists until the seed succeeds. Inspect `database/verify_v4.sql` and run its read-only queries afterward.
+The optional V4 dataset contains fictional disaster scenarios and related operational records. These are demonstration records, not verified current emergencies.
 
-## Start the application
+After backing up the database and applying the required migration, open a terminal in `backend` with the Python environment active.
 
-From `backend`:
+First validate the seed plan:
 
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001
+python ..\database\seed_v4.py --check
 ```
 
-In a second PowerShell window at the root:
+This check does not connect to MySQL or write records.
+
+If the check succeeds and you want to add the demonstration dataset, run:
 
 ```powershell
-.\backend\.venv\Scripts\python.exe scripts\serve_frontend.py
+python ..\database\seed_v4.py --apply
 ```
 
-- Application: http://127.0.0.1:5500
-- Health: http://127.0.0.1:8001/health
-- API documentation: http://127.0.0.1:8001/docs
+Choose a demonstration-account password when prompted.
 
-For React development, use `npm ci` once when dependencies are absent, then `npm run dev` in `frontend`. This replaces the Python frontend server on the same port. After editing React sources, `npm run build` refreshes the prebuilt interface.
+The seed script is designed to insert the dataset transactionally, preserve existing records, and refuse conflicting or incomplete demonstration namespaces. Review `database/verify_v4.sql` for read-only verification queries.
 
-Provision an administrator without a hardcoded password if no legitimate account exists:
+For the complete procedure, including backups, migration, and verification, see [`database/V4_SAMPLE_DATA.md`](database/V4_SAMPLE_DATA.md).
+
+## Running the Application
+
+### 1. Start the Backend
+
+From the `backend` directory:
 
 ```powershell
-# In backend
-.\.venv\Scripts\python.exe -m app.manage create-admin --email your-address@example.com --name "Your Name"
+.\.venv\Scripts\Activate.ps1
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
-The command prompts privately. Seeded demonstration accounts use the password selected during `--apply`; the script prints their email references, never their password. Public self-registration remains available.
+Keep this terminal open.
 
-## Roles
+Once the backend is running, the following endpoints should be available if configured as documented:
 
-| Role | Purpose |
+- API health: `http://127.0.0.1:8001/health`
+- FastAPI documentation: `http://127.0.0.1:8001/docs`
+
+### 2. Start the Frontend
+
+**Option A: Serve the prebuilt frontend**
+
+Open a second terminal at the repository root:
+
+```powershell
+python .\scripts\serve_frontend.py
+```
+
+If the serving script and build output are present and configured for port `5500`, open:
+
+`http://127.0.0.1:5500`
+
+**Option B: Run React in development mode**
+
+Open another terminal in `frontend`:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Open the local URL printed by Vite.
+
+After changing React source files, build the frontend when the deployment workflow requires the production output:
+
+```powershell
+npm run build
+```
+
+Do not run two frontend servers on the same port simultaneously.
+
+## Database and Project Structure
+
+The repository contains the main application and database-related resources:
+
+| Path | Purpose |
 |---|---|
-| ADMIN | Response operations, Advanced Tools and account administration |
-| DISASTER_MANAGER | Response operations and Advanced Tools |
-| VOLUNTEER | Existing owned-report submission and tracking permissions |
-| PUBLIC_USER | Submit suspected emergencies and track own reports |
+| `frontend/` | React frontend and its build configuration |
+| `backend/` | FastAPI application and Python dependencies |
+| `database/` | SQL scripts, migration-related resources, sample-data utilities, and verification queries |
+| `scripts/` | Project utility scripts, including the frontend serving script where present |
+| `README.md` | Project overview and setup instructions |
 
-## Verification and troubleshooting
+Database scripts have different purposes. Review a script before executing it, particularly if it contains table drops, deletes, or other destructive operations.
 
-Install development requirements only when running tests. Focused V4 checks:
+## Testing
+
+Run tests available in your checkout and review their actual results.
+
+Backend tests, if the development requirements and test suite are present, can be run from `backend`:
 
 ```powershell
-# In backend
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
-.\.venv\Scripts\python.exe -m pytest -q tests/test_v4_overview.py tests/test_v4_replay.py tests/test_v4_seed.py
-# In frontend
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+Frontend or Node.js tests should be run using the scripts and test files present in the repository. For example, where these files exist:
+
+```powershell
 node --test tests/map-pages.test.js tests/replay.test.js tests/navigation.test.js
 ```
 
-The V4 implementation recorded 16 new backend checks, 5 prior backend regression checks and 7 targeted frontend checks passing, plus production builds and an isolated UI review. This does not certify the owner database: migration, seed execution, stock/capacity verification and restart persistence still require the MySQL walkthrough. Timeline PDF API/content validation passed; a browser download wait did not complete in the isolated review; verify exports on the demonstration laptop. Earlier tests remain available and are not claimed as rerun in full for V4.
+A successful build alone does not establish that the entire application works end to end. Before a demonstration, verify the database migration, login and role permissions, incident reporting, persistence after restart, map behavior, and report downloads in the intended environment.
 
-For API 503, check MySQL readiness, credentials and schema migration. For port conflicts, stop only the application's existing listener or choose/document a matching port and CORS configuration. For cookie/CORS failures, consistently use `127.0.0.1` in both URLs. Do not open source HTML through `file://`. Empty maps may reflect filters or absent coordinates; never replace database failures with fake data. External tiles/geocoding need internet, while the packaged boundary map and server PDF map use bundled data.
+## Known Limitations
 
-Replay history is partial for older incidents. It uses current geographic context and cannot recreate unknown historical states. Inventory has no warehouse-location field; resource map points represent allocation destinations. Shelter registrations have no direct disaster relationship. Simulation results are temporary and do not modify live records.
+- Historical replay depends on recorded audit data. Older incidents may have incomplete histories.
+- Demonstration records are fictional and must not be treated as verified emergencies.
+- Map visibility depends on available coordinates and active filters.
+- Resource map locations depend on the locations supported by the current data model.
+- Shelter registrations may not have a direct disaster relationship in the existing schema.
+- Simulation results are hypothetical and must remain separate from live operational records.
+- External map tiles and geocoding services may require internet access.
 
-Stop frontend and API with Ctrl+C. Stop Docker MySQL with `docker stop disaster-mysql` when desired, preserving the volume. Keep `.env`, passwords, dumps, sessions, virtual environments and `node_modules` out of Git. Review sample accounts before any wider deployment.
+## Security and Data Safety
+
+- Keep credentials, private environment files, database backups, virtual environments, and dependency folders out of Git.
+- Back up the database before applying migrations or demonstration data.
+- Never execute destructive legacy SQL scripts against a populated database.
+- Change or disable demonstration accounts before any wider deployment.
+- Use HTTPS and secure cookie settings outside local development.
+- Treat backend authorization—not frontend visibility—as the security boundary.
+
+## Project Status
+
+This is a college DBMS project demonstrating database design, full-stack application development, role-based access, incident reporting, and disaster-response workflows.
+
+The verification status should reflect the code, test results, and database walkthrough for the version being demonstrated.
