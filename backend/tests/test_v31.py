@@ -34,20 +34,21 @@ def fixtures(count=8):
     return items, shelters, shortages
 
 
-def test_briefing_typical_empty_and_larger_scopes_page_counts():
+def test_briefing_typical_empty_and_larger_scopes_preserve_all_records():
     for count in [0, 4, 8, 80]:
         items, shelters, shortages = fixtures(count)
         pdf = overview_pdf(items, {}, shelters, shortages, "ISOLATED FIXTURE; not live records")
         reader = PdfReader(BytesIO(pdf))
-        assert 2 <= len(reader.pages) <= 3
+        assert len(reader.pages) >= 2
         text = " ".join(page.extract_text() for page in reader.pages)
         assert "Generated UTC:" in text and "Map legend" in text
         assert "ISOLATED FIXTURE" in text
         assert all(
             "Page " + str(i + 1) in page.extract_text() for i, page in enumerate(reader.pages)
         )
-        if count > 6:
-            assert "selected highlights" in text
+        # V4 intentionally exports every matching record, including larger scopes.
+        for item in items:
+            assert item["title"] in text
         assert any(page.images for page in reader.pages)
 
 

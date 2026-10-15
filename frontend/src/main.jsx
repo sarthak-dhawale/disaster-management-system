@@ -9,8 +9,10 @@ import { ResourceIntelligence } from './intelligence';
 import { Simulator } from './simulator';
 import { Reports, History, Search } from './reports';
 import './style.css';
+import './replay.css';
 import { navigationFor } from './navigation';
 const Overview = lazy(() => import('./overview').then((m) => ({ default: m.Overview })));
+const ReplayStudio = lazy(() => import('./replay').then((m) => ({ default: m.ReplayStudio })));
 class PageBoundary extends React.Component {
   state = { failed: false };
   static getDerivedStateFromError() {
@@ -234,6 +236,7 @@ function App() {
   else if (modules[route])
     content = <Management key={route} module={route} user={user} notify={setMessage} />;
   else if (route === 'overview') content = <Overview user={user} />;
+  else if (route === 'disaster-replay') content = <ReplayStudio />;
   else if (route === 'resource-intelligence')
     content = <ResourceIntelligence notify={setMessage} />;
   else if (route === 'response-simulator') content = <Simulator notify={setMessage} />;
@@ -299,7 +302,7 @@ function App() {
         </nav>
         <footer>
           <span className="workspace-label">DATABASE MANAGEMENT PROJECT</span>
-          <small>Version 3.1 · India</small>
+          <small>Version 4.0 · India</small>
         </footer>
       </aside>
       <div className="main-shell">

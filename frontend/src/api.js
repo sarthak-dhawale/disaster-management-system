@@ -79,6 +79,23 @@ export function query(values = {}) {
     Object.entries(values).filter(([, v]) => v !== '' && v != null),
   ).toString();
 }
+// Traverse every server page. Never show a truncated map as a complete result.
+export async function allIncidents(params, signal) {
+  const items = [], seen = new Set();
+  let offset = 0;
+  while (true) {
+    const page = await request(`/api/intelligence/incidents?${params}&stable_order=true&limit=500&offset=${offset}`, { signal });
+    for (const item of page.items) {
+      const key = `${item.kind}:${item.id}`;
+      if (!seen.has(key)) { seen.add(key); items.push(item); }
+    }
+    offset += page.items.length;
+    if (!page.has_more) break;
+    if (!page.items.length) throw new Error('Incident pagination did not advance. Refresh the map.');
+  }
+  items.sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0) || String(b.incident_time || '').localeCompare(String(a.incident_time || '')) || b.id - a.id);
+  return { items, total: items.length };
+}
 export async function download(path) {
   const response = await fetch(API + path, { credentials: 'include' });
   if (!response.ok) {

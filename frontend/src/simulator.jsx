@@ -184,6 +184,7 @@ export function Simulator({ notify }) {
           />
         )}
       </div>
+      <ol className="simulation-steps" aria-label="Simulation workflow">{['Scenario setup','Resource / shelter assumptions','Run simulation','Compare plans','Export or discard'].map((title,i) => <li key={title} className={(editing ? i<3 : i>=3) ? 'active' : ''}><span>{i+1}</span>{title}</li>)}</ol>
       <div className="notice simulation-notice">
         <strong>HYPOTHETICAL SCENARIO — NOT A LIVE INCIDENT</strong>
         <p>
@@ -203,42 +204,13 @@ export function Simulator({ notify }) {
               <div className="section-heading">
                 <span className="step">1</span>
                 <div>
-                  <h2>Scenario details</h2>
+                  <h2>Scenario setup</h2>
                   <p>The Assam flood example is hypothetical and is never saved as an incident.</p>
                 </div>
               </div>
               <div className="form-grid">
-                {orderedFields.map((f) => (
-                  <React.Fragment key={f.key}>
-                    {{
-                      region: 'Affected area',
-                      population: 'Affected population & urgency',
-                      accommodation_required: 'Shelter requirements',
-                      reserve_percent: 'Simulation constraints',
-                      description: 'Planning assumptions',
-                    }[f.key] && (
-                      <div className="scenario-section">
-                        <h3>
-                          {
-                            {
-                              region: 'Affected area',
-                              population: 'Affected population & urgency',
-                              accommodation_required: 'Shelter requirements',
-                              reserve_percent: 'Simulation constraints',
-                              description: 'Planning assumptions',
-                            }[f.key]
-                          }
-                        </h3>
-                      </div>
-                    )}
-                    <FormField
-                      key={f.key}
-                      field={f}
-                      value={scenario[f.key]}
-                      onChange={(value) => change(f.key, value)}
-                    />
-                  </React.Fragment>
-                ))}
+                {orderedFields.filter((f) => !['latitude','longitude','description','district'].includes(f.key)).map((f) => <FormField key={f.key} field={f} value={scenario[f.key]} onChange={(value) => change(f.key,value)} />)}
+                <details className="scenario-options"><summary>Optional location and planning notes</summary><div className="form-grid">{orderedFields.filter((f) => ['latitude','longitude','description','district'].includes(f.key)).map((f) => <FormField key={f.key} field={f} value={scenario[f.key]} onChange={(value) => change(f.key,value)} />)}</div></details>
                 <label>
                   <span>Reference an existing official incident (optional)</span>
                   <select
@@ -259,7 +231,7 @@ export function Simulator({ notify }) {
               <div className="section-heading">
                 <span className="step">2</span>
                 <div>
-                  <h2>Resource demand assumptions</h2>
+                  <h2>Resource and shelter assumptions</h2>
                   <p>
                     Choose actual inventory items. Each quantity uses that item’s unit. Rows can
                     represent competing regional demands.
@@ -430,18 +402,6 @@ export function Simulator({ notify }) {
               </button>
             ))}
           </div>
-          <Metrics
-            items={[
-              [
-                'Fully covered requests',
-                chosen.fully_covered_requests,
-                'Non-zero demand rows covered in full',
-              ],
-              ['Partially covered', chosen.partially_covered_requests],
-              ['Unallocated', chosen.unallocated_requests],
-              ['Shelter gap', result.shelters.gap, 'People; all-region capacity upper bound'],
-            ]}
-          />
           {(chosen.resources.some((r) => Number(r.unmet) > 0) || result.shelters.gap > 0) && (
             <div className="notice" role="status">
               Plan {plan} leaves unmet demand for{' '}

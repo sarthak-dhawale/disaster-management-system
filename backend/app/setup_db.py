@@ -87,10 +87,11 @@ WHERE review_status='PENDING_REVIEW'
         from app.v2_schema import install_v2
 
         install_v2(conn)
-        from app.history_schema import install_history
+        from app.history_schema import install_history, install_v4_history
 
         install_history(conn)
-    print("V2.0 additive migration complete. Existing records retained.")
+        install_v4_history(conn)
+    print("V4 additive migration complete. Existing records retained.")
 
 
 def main():

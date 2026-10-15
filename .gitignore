@@ -3,41 +3,32 @@ __pycache__/
 *.py[cod]
 *.pyo
 
-# Python virtual environments
+# Virtual environment
 backend/venv/
-venv/
-.venv/
+backend/.venv/
 
-# Environment variables and secrets
+# Environment variables
 .env
-.env.*
-!.env.example
 backend/.env
-backend/.env.*
-!backend/.env.example
 
 # VS Code
 .vscode/
 
-# Operating system
+# OS
 .DS_Store
 Thumbs.db
-
-# Python testing and coverage
+.venv/
 .pytest_cache/
-.ruff_cache/
 *.log
 backend/.coverage
 backend/htmlcov/
-
-# Node.js dependencies
-node_modules/
-**/node_modules/
-
-# Frontend generated build and development cache
-frontend/dist/
-frontend/.vite/
-
-# Local database backups
 /dms-before-*.sql
 
+node_modules/
+**/.env.*
+!**/.env.example
+.ruff_cache/
+frontend/.vite/
+
+# Frontend build output
+frontend/dist/

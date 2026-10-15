@@ -28,10 +28,12 @@ from app.routes import (
     exports,
     planning,
     reports_v3,
+    operations,
+    replay,
 )
 
 app = FastAPI(
-    title="Disaster Management System", version="3.1.0", dependencies=[Depends(check_write_request)]
+    title="Disaster Management System", version="4.0.0", dependencies=[Depends(check_write_request)]
 )
 app.add_middleware(
     CORSMiddleware,
@@ -61,6 +63,8 @@ for module in [
     exports,
     planning,
     reports_v3,
+    operations,
+    replay,
 ]:
     app.include_router(module.router)
 
@@ -116,7 +120,7 @@ async def unexpected_error(request, exc):
 
 @app.get("/")
 def root():
-    return {"message": "Disaster Management System API is running", "version": "3.1.0"}
+    return {"message": "Disaster Management System API is running", "version": "4.0.0"}
 
 
 @app.get("/health")
