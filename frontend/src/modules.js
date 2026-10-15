@@ -44,6 +44,7 @@ const modules = {
     id: 'disaster_id',
     description: 'Official incidents confirmed by your response team.',
     columns: columns(
+      ['disaster_id', 'ID'],
       ['title', 'Incident'],
       ['disaster_type', 'Type'],
       ['city', 'Location'],
@@ -74,6 +75,7 @@ const modules = {
     id: 'shelter_id',
     description: 'Safe spaces, occupancy and contact information.',
     columns: columns(
+      ['shelter_id', 'ID'],
       ['name', 'Shelter'],
       ['city', 'Location'],
       ['current_occupancy', 'Occupants'],
@@ -97,6 +99,7 @@ const modules = {
     id: 'volunteer_id',
     description: 'People and skills supporting the response effort.',
     columns: columns(
+      ['volunteer_id', 'ID'],
       ['full_name', 'Volunteer'],
       ['skills', 'Skills'],
       ['availability_status', 'Availability'],

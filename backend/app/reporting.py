@@ -260,7 +260,7 @@ def build_pdf(title, sections, scope="All matching records", map_rows=None, warn
         author="Disaster Management System",
     )
     story = [
-        paragraph("DISASTER MANAGEMENT SYSTEM / V3.1", "DMSBody"),
+        paragraph("DISASTER MANAGEMENT SYSTEM / V4", "DMSBody"),
         paragraph(title, "DMSTitle"),
         paragraph("Generated UTC: " + generated),
         paragraph("Scope: " + scope),

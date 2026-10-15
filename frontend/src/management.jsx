@@ -69,7 +69,7 @@ export function IncidentDetails({ kind, id, onClose }) {
 export function Management({ module, user, notify }) {
   const config = modules[module],
     admin = ['ADMIN', 'DISASTER_MANAGER'].includes(user.role);
-  const [filters, setFilters] = useState({}),
+  const [filters, setFilters] = useState(() => Object.fromEntries(new URLSearchParams(location.hash.split('?')[1] || ''))),
     [search, setSearch] = useState(''),
     [offset, setOffset] = useState(0);
   const q = useDebounced(search),

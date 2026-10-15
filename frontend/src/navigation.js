@@ -13,6 +13,7 @@ export const operations = [
   ['users', 'Users', 'people'],
 ];
 export const advanced = [
+  ['disaster-replay', 'Disaster Replay Studio', 'file'],
   ['resource-intelligence', 'Resource Intelligence', 'chart'],
   ['response-simulator', 'Response Simulator', 'chart'],
 ];

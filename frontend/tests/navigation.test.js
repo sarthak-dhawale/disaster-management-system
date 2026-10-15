@@ -5,7 +5,7 @@ test('management order stays separate from advanced and contextual tools', () =>
   const nav = navigationFor('ADMIN');
   assert.deepEqual(
     nav.advanced.map((r) => r[0]),
-    ['resource-intelligence', 'response-simulator'],
+    ['disaster-replay', 'resource-intelligence', 'response-simulator'],
   );
   assert.equal(nav.main.at(-1)[0], 'users');
   assert(!nav.main.some((r) => ['audit-history', 'resource-movements', 'search'].includes(r[0])));

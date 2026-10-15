@@ -57,6 +57,7 @@ def incidents(
     include_rejected: bool = False,
     limit: int = Query(200, ge=1, le=500),
     offset: int = Query(0, ge=0),
+    stable_order: bool = False,
 ):
     if start and end and start > end:
         raise HTTPException(422, "Start date must not follow end date")
@@ -85,7 +86,7 @@ def incidents(
         clauses.append("(response_status=:status OR review_status=:status)")
         params["status"] = status
     if q:
-        clauses.append("CONCAT_WS(' ',title,description,city,address,state) LIKE :q")
+        clauses.append("CONCAT_WS(' ',id,title,disaster_type,description,city,address,state) LIKE :q")
         params["q"] = "%" + q + "%"
     if start:
         clauses.append("incident_time>=:start")
@@ -97,10 +98,11 @@ def incidents(
     base = f"FROM ({INCIDENT_SQL}) incidents WHERE {where}"
     total = db.execute(text("SELECT COUNT(*) " + base), params).scalar_one()
     score = "CASE WHEN response_status IN ('RESOLVED','REJECTED') THEN 0 ELSE CASE severity WHEN 'CRITICAL' THEN 100 WHEN 'HIGH' THEN 75 WHEN 'MEDIUM' THEN 50 WHEN 'LOW' THEN 25 ELSE 0 END + CASE WHEN response_status='ACTIVE' THEN 20 WHEN review_status='PENDING_REVIEW' THEN 15 WHEN response_status IN ('CONTAINED','IN_PROGRESS') THEN 10 ELSE 0 END + COALESCE(LEAST(15,GREATEST(0,TIMESTAMPDIFF(HOUR,incident_time,NOW()))),0) END"
+    order = "kind,id" if stable_order else "priority_score DESC,incident_time DESC,kind,id DESC"
     rows = (
         db.execute(
             text(
-                f"SELECT *,{score} AS priority_score {base} ORDER BY priority_score DESC,incident_time DESC,kind,id DESC LIMIT :limit OFFSET :offset"
+                f"SELECT *,{score} AS priority_score {base} ORDER BY {order} LIMIT :limit OFFSET :offset"
             ),
             params,
         )
@@ -112,7 +114,7 @@ def incidents(
         row = dict(raw)
         row.pop("owner_id", None)
         row.update(priority(row))
-        row["plottable"] = india_extent(row.get("latitude"), row.get("longitude"))
+        row["plottable"] = valid_coordinates(row.get("latitude"), row.get("longitude"))
         row["coordinate_note"] = (
             None
             if row["plottable"]

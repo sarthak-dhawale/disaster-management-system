@@ -14,6 +14,7 @@ export function DemandDetails({ row, onClose }) {
   return (
     <Modal title={`Request #${row.request_id} / ${row.resource_name}`} wide onClose={onClose}>
       <p>{row.recommendation_reason}</p>
+      <div className="detail-grid">{[['Required',row.quantity],['Reserved / delivered',row.allocated_quantity],['Delivered',row.delivered_quantity],['Outstanding',row.outstanding_quantity],['Available stock',row.available_quantity],['Coverage',row.fulfillment],['Request status',row.status]].map(([title,value]) => <div key={title}><small>{title}</small><p>{value}</p></div>)}</div>
       <h3>Linked allocations (first 200)</h3>
       <State {...allocations}>
         <DataTable
@@ -70,19 +71,15 @@ export function ResourceIntelligence({ notify }) {
     metrics = data?.metrics;
   const [advanced, setAdvanced] = useState(false);
   const columns = [
+    { key: 'request_id', label: 'Request ID' },
     { key: 'disaster_title', label: 'Disaster' },
-    { key: 'state', label: 'Region' },
     { key: 'severity', label: 'Urgency' },
     { key: 'resource_name', label: 'Resource' },
     { key: 'unit', label: 'Unit' },
     { key: 'quantity', label: 'Required' },
-    { key: 'allocated_quantity', label: 'Reserved / delivered' },
-    { key: 'delivered_quantity', label: 'Delivered' },
-    { key: 'outstanding_quantity', label: 'Outstanding' },
-    { key: 'available_quantity', label: 'Shared stock' },
-    { key: 'fulfillment', label: 'Coverage' },
-    { key: 'status', label: 'Request status' },
-    { key: 'recommended_action', label: 'Review next' },
+    { key: 'available_quantity', label: 'Available' },
+    { key: 'outstanding_quantity', label: 'Unmet request' },
+    { key: 'recommended_action', label: 'Recommended next step' },
   ];
   return (
     <>
@@ -137,15 +134,13 @@ export function ResourceIntelligence({ notify }) {
       {metrics && (
         <Metrics
           items={[
-            ['Disasters with unmet demand', metrics.disasters_with_unmet_demand],
+            ['Outstanding requests', metrics.outstanding_requests],
             ['Urgent unresolved', metrics.high_priority_unresolved],
             ['Resource types short', metrics.shortage_resource_types],
-            ['Fully reserved', metrics.fulfilled],
-            ['Partially reserved', metrics.partial],
-            ['Awaiting allocation review', metrics.awaiting_review],
           ]}
         />
       )}
+      {data?.resource_totals.length > 0 && <details className="panel resource-balance"><summary>Resource balances and shortage quantities</summary><DataTable rows={data.resource_totals} columns={[{key:'resource_name',label:'Resource'},{key:'unit',label:'Unit'},{key:'outstanding',label:'Open unmet demand'},{key:'available',label:'Available stock'},{key:'shortage',label:'Shortage'}]} /><p className="panel-note">Stock is shared across requests. Recommendations use rules; approval revalidates stock.</p></details>}
       <section className="panel">
         <div className="toolbar">
           <input
@@ -154,15 +149,6 @@ export function ResourceIntelligence({ notify }) {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setOffset(0);
-            }}
-          />
-          <input
-            aria-label="State"
-            placeholder="State"
-            value={filters.state || ''}
-            onChange={(e) => {
-              setFilters({ ...filters, state: e.target.value });
               setOffset(0);
             }}
           />
@@ -196,6 +182,30 @@ export function ResourceIntelligence({ notify }) {
               </option>
             ))}
           </select>
+          <button
+            onClick={() => {
+              setSearch('');
+              setFilters({});
+              setOffset(0);
+            }}
+          >
+            Clear
+          </button>
+          <button onClick={invalidate}>Refresh</button>
+          <button onClick={() => setAdvanced(!advanced)}>
+            {advanced ? 'Hide advanced filters' : 'Advanced filters'}
+          </button>
+        </div>
+        {advanced && (
+          <div className="form-grid form-panel">          <input
+            aria-label="State"
+            placeholder="State"
+            value={filters.state || ''}
+            onChange={(e) => {
+              setFilters({ ...filters, state: e.target.value });
+              setOffset(0);
+            }}
+          />
           <select
             aria-label="Priority"
             value={filters.priority || ''}
@@ -220,22 +230,7 @@ export function ResourceIntelligence({ notify }) {
             <option value="OPEN">Open</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
-          <button
-            onClick={() => {
-              setSearch('');
-              setFilters({});
-              setOffset(0);
-            }}
-          >
-            Clear
-          </button>
-          <button onClick={invalidate}>Refresh</button>
-          <button onClick={() => setAdvanced(!advanced)}>
-            {advanced ? 'Hide record filters' : 'Filter disaster / resource'}
-          </button>
-        </div>
-        {advanced && (
-          <div className="form-grid form-panel">
+
             <label>
               <span>Official disaster</span>
               <Relation

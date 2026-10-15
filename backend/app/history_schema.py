@@ -50,6 +50,19 @@ TABLES = {
     ),
 }
 
+
+# V4 extends future audit snapshots only. Existing history remains untouched.
+REPLAY_FIELDS = {
+    "disasters": ["description", "start_time", "end_time", "created_at"],
+    "locations": ["latitude", "longitude", "coordinate_source"],
+    "emergency_reports": ["disaster_type", "report_type", "description", "reported_at", "occurred_at", "resolved_at", "reported_location_text", "reported_latitude", "reported_longitude"],
+    "resource_requests": ["created_at", "updated_at"],
+    "resource_allocations": ["request_id", "allocation_date"],
+    "volunteer_assignments": ["start_time", "end_time"],
+}
+for _table, _fields in REPLAY_FIELDS.items():
+    TABLES[_table][1].extend(f for f in _fields if f not in TABLES[_table][1])
+
 AUDIT_SQL = """
 CREATE TABLE IF NOT EXISTS audit_history (audit_id BIGINT AUTO_INCREMENT PRIMARY KEY, entity VARCHAR(40) NOT NULL,
                                                                                                          record_id INT NOT NULL,
@@ -226,3 +239,21 @@ WHERE NOT EXISTS
     for name, sql in VIEWS.items():
         if name not in views:
             conn.exec_driver_sql(f"CREATE VIEW {name} AS {sql}")
+
+
+def install_v4_history(conn):
+    """Refresh owned, outdated triggers during explicit maintenance migration.
+
+    Trigger DDL auto-commits. Stop API writers, back up, rerun on interruption.
+    No audit rows, tables, foreign keys or business data are removed.
+    """
+    existing = {r["TRIGGER_NAME"]:r["ACTION_STATEMENT"] for r in conn.execute(text(
+        "SELECT TRIGGER_NAME,ACTION_STATEMENT FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA=DATABASE()"
+    )).mappings()}
+    for table, fields in REPLAY_FIELDS.items():
+        for action in ["INSERT","UPDATE","DELETE"]:
+            name=f"dms_v12_audit_{table}_{action.lower()}"
+            definition=existing.get(name,"")
+            if definition and all("'"+field+"'" in definition for field in fields): continue
+            if definition: conn.exec_driver_sql("DROP TRIGGER "+name)
+            conn.exec_driver_sql(audit_trigger(table,action))

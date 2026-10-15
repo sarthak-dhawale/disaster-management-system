@@ -1,4 +1,4 @@
-"""Serve the prebuilt V3 frontend locally; no Node or Docker is needed to run it."""
+"""Serve the prebuilt V4 frontend locally; no Node or Docker is needed to run it."""
 
 from argparse import ArgumentParser
 from functools import partial
@@ -17,7 +17,7 @@ def main():
         )
     handler = partial(SimpleHTTPRequestHandler, directory=str(directory))
     server = ThreadingHTTPServer(("127.0.0.1", args.port), handler)
-    print(f"DMS V3 frontend: http://127.0.0.1:{args.port} (Ctrl+C to stop)", flush=True)
+    print(f"DMS V4 frontend: http://127.0.0.1:{args.port} (Ctrl+C to stop)", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

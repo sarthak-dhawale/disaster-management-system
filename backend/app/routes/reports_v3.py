@@ -213,6 +213,7 @@ def overview_export(
     status: str = "",
     start: str | None = None,
     end: str | None = None,
+    record_kind: str = 'all',
 ):
     from datetime import date
 
@@ -223,6 +224,8 @@ def overview_export(
         )
     except ValueError as exc:
         raise HTTPException(422, "Invalid report date") from exc
+    if record_kind not in {'all', 'disaster', 'report', 'none'}:
+        raise HTTPException(422, 'Invalid incident-layer scope')
     # Snapshot is limited explicitly; never silently export only the first map page.
     result = incidents(
         db,
@@ -235,7 +238,7 @@ def overview_export(
         start_date,
         end_date,
         True,
-        True,
+        False,
         500,
         0,
     )
@@ -255,11 +258,13 @@ def overview_export(
                 start_date,
                 end_date,
                 True,
-                True,
+                False,
                 500,
                 offset,
             )["items"]
         )
+    if record_kind != 'all':
+        items = [r for r in items if r['kind'] == record_kind]
     sections = [
         (
             "Incidents in selected scope",
@@ -338,7 +343,7 @@ def overview_export(
                 exports.COLUMNS["emergency-reports"],
             )
         )
-    scope = f"Incident filters: q={q}; state={state}; severity={severity}; type={disaster_type}; status={status}; dates={start or 'any'} to {end or 'any'}. Resource, shelter and roster sections are explicitly global."
+    scope = f"Incident filters: q={q}; state={state}; severity={severity}; type={disaster_type}; status={status}; layers={record_kind}; dates={start or 'any'} to {end or 'any'}. Resource, shelter and roster sections are explicitly global."
     if format == "pdf":
         return Response(
             overview_pdf(

@@ -1,5 +1,31 @@
 import { useEffect, useState } from 'react';
-import { subscribe, listeners } from './api';
+import { subscribe, listeners, allIncidents } from './api';
+export function useAllIncidents(params) {
+  const [state, setState] = useState({ loading: true }),
+    [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const refresh = () => setRevision((v) => v + 1);
+    listeners.add(refresh);
+    return () => listeners.delete(refresh);
+  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    setState({ loading: true });
+    allIncidents(params, controller.signal)
+      .then((data) => {
+        if (active) setState({ data, loading: false });
+      })
+      .catch((error) => {
+        if (active) setState({ error, loading: false });
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [params, revision]);
+  return state;
+}
 export function useData(path) {
   const [state, setState] = useState({ loading: true });
   const [revision, setRevision] = useState(0);

@@ -59,150 +59,31 @@ def severity_chart(items):
 def overview_pdf(items, stats, shelters, shortages, scope):
     generated = datetime.now(timezone.utc).isoformat(timespec="seconds")
     buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        leftMargin=40,
-        rightMargin=40,
-        topMargin=40,
-        bottomMargin=42,
-        title="Overview briefing",
-        author="Disaster Management System",
-    )
-    ordered = sorted(items, key=urgency)
-    shortage_rows = sorted(
-        [dict(r) for r in shortages if Decimal(str(r.get("shortage", 0))) > 0],
-        key=lambda r: str(r.get("resource_name", "")),
-    )
-    shelter_rows = sorted(
-        [
-            {
-                **r,
-                "spare": max(0, int(r.get("capacity") or 0) - int(r.get("current_occupancy") or 0)),
-            }
-            for r in shelters
-        ],
-        key=lambda r: (
-            -float(r.get("current_occupancy") or 0) / max(1, float(r.get("capacity") or 0)),
-            str(r.get("name", "")),
-        ),
-    )
-    official = sum(r.get("kind") == "disaster" for r in items)
-    pending = sum(r.get("review_status") == "PENDING_REVIEW" for r in items)
-    story = [
-        paragraph("DISASTER MANAGEMENT SYSTEM / V3.1", "DMSBody"),
-        paragraph("Operational overview", "DMSTitle"),
-        paragraph("Generated UTC: " + generated),
-        paragraph("Selected incident scope: " + scope),
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=40, rightMargin=40,
+        topMargin=40, bottomMargin=42, title="Overview briefing", author="Disaster Management System")
+    official = [r for r in items if r.get("kind") == "disaster"]
+    available = sum(max(0, int(s["capacity"])-int(s["current_occupancy"])) for s in shelters if s.get("status")=="AVAILABLE")
+    metrics = [
+        {"metric":"Active disasters in scope", "value":sum(r.get("response_status")=="ACTIVE" for r in official)},
+        {"metric":"Critical disasters in scope", "value":sum(r.get("severity")=="CRITICAL" for r in official)},
+        {"metric":"Pending reports in scope", "value":sum(r.get("review_status")=="PENDING_REVIEW" for r in items)},
+        {"metric":"Available shelter places (global)", "value":available},
+        {"metric":"Resource shortage types (global)", "value":sum(Decimal(str(r.get("shortage",0)))>0 for r in shortages)},
     ]
-    cards = [
-        [
-            paragraph("OFFICIAL INCIDENTS\n" + str(official)),
-            paragraph("PENDING REPORTS\n" + str(pending)),
-            paragraph(
-                "HIGH / CRITICAL\n"
-                + str(sum(r.get("severity") in {"HIGH", "CRITICAL"} for r in items))
-            ),
-            paragraph(
-                "UNLOCATED\n"
-                + str(
-                    sum(
-                        not r.get(
-                            "plottable",
-                            r.get("latitude") is not None and r.get("longitude") is not None,
-                        )
-                        for r in items
-                    )
-                )
-            ),
-        ]
-    ]
-    panel = Table(cards, colWidths=[128] * 4)
-    panel.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef3f5")),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("BOX", (0, 0), (-1, -1), 0.4, colors.HexColor("#d1dce4")),
-                ("TOPPADDING", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-            ]
-        )
-    )
-    story.extend(
-        [
-            Spacer(1, 12),
-            panel,
-            paragraph("Incident severity in selected scope", "DMSHeading"),
-            severity_chart(items),
-            paragraph(
-                f"{official} official incident records and {pending} pending reports in this scope. Confirmed reports linked to an official disaster are not counted twice."
-            ),
-        ]
-    )
-    s = stats.get("shelters", {})
-    r = stats.get("resources", {})
-    v = stats.get("volunteers", {})
-    story.extend(
-        [
-            paragraph("Countrywide operational situation", "DMSHeading"),
-            paragraph(
-                f"Shelters: {s.get('total', 0)} recorded; {s.get('available', 0)} eligible with spare capacity. Occupancy {s.get('total_occupancy', 0)} / {s.get('total_capacity', 0)} recorded places. Resources: {r.get('available_types', 0)} types with stock, {r.get('low_stock_count', 0)} at/below minimum. Volunteers: {v.get('available', 0)} available of {v.get('total', 0)} registered."
-            ),
-            paragraph(
-                f"{len(shortage_rows)} resource IDs have global OPEN demand exceeding available stock. Quantities are compared within each resource and unit; reserved stock and delivered stock remain distinct."
-            ),
-            paragraph(
-                "Scope note: incident KPIs/chart/map follow selected filters. Inventory, shortage and shelter summaries are countrywide. This briefing highlights priority records; filtered page exports and Overview CSV contain the underlying detailed records."
-            ),
-        ]
-    )
-    story.extend([PageBreak(), paragraph("Geographic & operational summary", "DMSTitle")])
-    picture, plotted, unlocated = india_map(items)
-    notes = paragraph(
-        f"Map legend\nBlue circle: official disaster\nOrange square: unverified/rejected report\n\nPlotted: {plotted}\nMissing/invalid/outside-map coordinates: {unlocated}\n\ngeoBoundaries / DataMeet / ECI\nCC BY 2.5 India. Boundaries are contextual."
-    )
-    map_panel = Table([[Image(picture, width=250, height=212.5), notes]], colWidths=[288, 227])
-    map_panel.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
-    story.append(map_panel)
-    incident_columns = ["id", "title", "state", "severity", "response_status"]
-    for heading, rows, columns in [
-        ("Priority incidents / reports (up to 4)", ordered[:4], incident_columns),
-        (
-            "Resource shortage highlights (up to 3; original units)",
-            shortage_rows[:3],
-            ["resource_name", "unit", "outstanding", "available", "shortage"],
-        ),
-        (
-            "Shelter occupancy highlights (up to 3)",
-            shelter_rows[:3],
-            ["name", "state", "current_occupancy", "capacity", "spare"],
-        ),
-    ]:
-        story.append(paragraph(heading, "DMSHeading"))
-        story.extend(table(rows, columns))
-    if len(ordered) > 4 or len(shortage_rows) > 3 or len(shelter_rows) > 3:
-        story.extend([PageBreak(), paragraph("Additional highlights & review notes", "DMSTitle")])
-        for heading, rows, columns in [
-            ("Further priority incidents / reports (next 14)", ordered[4:18], incident_columns),
-            (
-                "Further resource shortages (next 6)",
-                shortage_rows[3:9],
-                ["resource_name", "unit", "outstanding", "available", "shortage"],
-            ),
-        ]:
-            story.append(paragraph(heading, "DMSHeading"))
-            story.extend(table(rows, columns))
-        story.append(
-            paragraph(
-                f"Summary scope: {len(items)} incidents/reports, {len(shortage_rows)} shortage resources and {len(shelters)} shelters. Tables are explicitly selected highlights, not an exhaustive inventory. Use page-specific PDFs or CSV for all matching records. Shelter priority is recorded occupancy ratio; resource quantities are never ranked across incompatible units."
-            )
-        )
-    story.append(
-        paragraph(
-            "Method: severity-based review order; counts represent records, not affected population. Missing coordinates remain counted. Availability reflects existing allocation rules; a recommendation requires a fresh authorized stock review."
-        )
-    )
-    footer = report_footer(generated, "Overview briefing")
-    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    story=[paragraph("DISASTER MANAGEMENT SYSTEM / V4", "DMSBody"), paragraph("Operational overview", "DMSTitle"),
+        paragraph("Generated UTC: "+generated), paragraph("Selected incident scope: "+scope)]
+    story.extend(table(metrics,["metric","value"]))
+    try:
+        picture,plotted,unlocated=india_map(items)
+        story += [paragraph("India incident map", "DMSHeading"),Image(picture,width=455,height=386.75),
+            paragraph(f"Map legend: blue circles = official disasters; orange squares = unverified reports. Plotted {plotted}; location unavailable/outside map extent {unlocated}. All matching records remain in the following table."),
+            paragraph("Boundaries: geoBoundaries / DataMeet / ECI, CC BY 2.5 India. Contextual boundaries, not navigation guidance. The map uses stored coordinates; no missing coordinates are inferred.")]
+    except (OSError,ValueError):
+        story.append(paragraph("Map image unavailable: bundled boundary data could not be read. All matching incident records and the selected filter scope are included below; no coordinates or map image have been fabricated."))
+    story += [PageBreak(), paragraph("Incidents in selected scope", "DMSTitle")]
+    rows=[{**r,"location":", ".join(str(r.get(k) or "") for k in ["city","state"]).strip(", ") or "Location unavailable"} for r in sorted(items,key=urgency)]
+    story.extend(table(rows,["kind","id","title","disaster_type","location","severity","response_status"]))
+    story.append(paragraph("Incident KPIs, map and table follow the same filters and include resolved records by default. Inventory and shelter metrics are countrywide. Shortage quantities are compared only within the same resource/unit; allocations do not prove delivery."))
+    footer=report_footer(generated,"Overview briefing")
+    doc.build(story,onFirstPage=footer,onLaterPages=footer)
     return buffer.getvalue()
